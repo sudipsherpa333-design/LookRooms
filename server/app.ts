@@ -62,4 +62,18 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
+// Global Error Handler
+app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  console.error(err.stack);
+  const status = err.status || 500;
+  const message = err.message || 'Internal Server Error';
+  res.status(status).json({
+    error: {
+      message,
+      status,
+      timestamp: new Date().toISOString()
+    }
+  });
+});
+
 export default app;

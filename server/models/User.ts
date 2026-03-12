@@ -63,7 +63,11 @@ const userSchema = new mongoose.Schema(
             "Driving License",
           ],
         },
-        documentNumber: String,
+        documentNumber: {
+          type: String,
+          set: (val: string) => val ? encrypt(val) : val,
+          get: (val: string) => val ? decrypt(val) : val
+        },
         frontImage: { url: String, publicId: String },
         backImage: { url: String, publicId: String },
         status: {
@@ -146,10 +150,22 @@ const userSchema = new mongoose.Schema(
       },
       payoutInfo: {
         bankName: String,
-        accountNumber: String,
+        accountNumber: {
+          type: String,
+          set: (val: string) => val ? encrypt(val) : val,
+          get: (val: string) => val ? decrypt(val) : val
+        },
         accountHolder: String,
-        esewaId: String,
-        khaltiPhone: String,
+        esewaId: {
+          type: String,
+          set: (val: string) => val ? encrypt(val) : val,
+          get: (val: string) => val ? decrypt(val) : val
+        },
+        khaltiPhone: {
+          type: String,
+          set: (val: string) => val ? encrypt(val) : val,
+          get: (val: string) => val ? decrypt(val) : val
+        },
       },
       businessName: String,
       panNumber: String,
