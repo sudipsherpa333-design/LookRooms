@@ -47,11 +47,47 @@ export const register = catchAsync(async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
-  const { phone, password, name } = req.body;
+  const { phone, password, name, role } = req.body;
+  
+  // Check if user already exists
+  const existingUser = await User.findOne({ phone });
+  if (existingUser) {
+    return res.status(400).json({ error: 'User with this phone number already exists' });
+  }
+
   const hashedPassword = await bcrypt.hash(password, 12);
-  const user = new User({ phone, password: hashedPassword, name });
+  const user = new User({ 
+    phone, 
+    password: hashedPassword, 
+    name,
+    role: role || 'user'
+  });
+  
   await user.save();
-  res.status(201).json({ message: 'User registered successfully' });
+
+  const jti = nanoid();
+  const { accessToken, refreshToken } = generateTokens(user._id.toString(), user.role, jti);
+
+  user.refreshTokens.push({ token: refreshToken, userAgent: req.headers['user-agent'], ip: req.ip });
+  await user.save();
+
+  res.cookie('refreshToken', refreshToken, { 
+    httpOnly: true, 
+    secure: true, 
+    sameSite: 'strict', 
+    maxAge: 7 * 24 * 60 * 60 * 1000 
+  });
+
+  res.status(201).json({ 
+    message: 'User registered successfully',
+    user: {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      role: user.role
+    },
+    accessToken
+  });
 });
 
 export const refreshToken = catchAsync(async (req: Request, res: Response) => {
