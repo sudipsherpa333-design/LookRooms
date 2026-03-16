@@ -11,7 +11,6 @@ const router = express.Router();
 // Rate limiters
 const sendOTPLimiter = rateLimit({
   store: redis ? new RedisStore({
-    // @ts-expect-error - ioredis type mismatch with rate-limit-redis
     sendCommand: (...args: string[]) => redis.call(...args),
   }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -23,7 +22,6 @@ const sendOTPLimiter = rateLimit({
 
 const verifyOTPLimiter = rateLimit({
   store: redis ? new RedisStore({
-    // @ts-expect-error - ioredis type mismatch with rate-limit-redis
     sendCommand: (...args: string[]) => redis.call(...args),
   }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
