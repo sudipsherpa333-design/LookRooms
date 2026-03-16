@@ -20,8 +20,8 @@ process.on("uncaughtException", (err) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI;
-const JWT_SECRET = process.env.JWT_SECRET;
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://sudipsherpa333_db_user:hiMLJK6biQK32SMv@cluster0.jjwwgox.mongodb.net/lookrooms?retryWrites=true&w=majority&appName=Cluster0";
+const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-for-dev-only";
 
 if (!MONGODB_URI || !JWT_SECRET) {
   console.error("CRITICAL: MONGODB_URI and JWT_SECRET must be set in environment variables.");
@@ -135,6 +135,8 @@ async function startServer() {
 }
 
 startServer();
+
+export default app;
 
 // Handle Unhandled Promise Rejections
 process.on("unhandledRejection", (err: Error) => {

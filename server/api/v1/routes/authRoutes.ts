@@ -10,10 +10,10 @@ const router = express.Router();
 
 // Rate limiters
 const sendOTPLimiter = rateLimit({
-  store: new RedisStore({
+  store: redis ? new RedisStore({
     // @ts-expect-error - ioredis type mismatch with rate-limit-redis
     sendCommand: (...args: string[]) => redis.call(...args),
-  }),
+  }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // 5 requests per IP per hour
   message: { error: 'Too many OTP requests from this IP. Please try again in an hour.' },
@@ -22,10 +22,10 @@ const sendOTPLimiter = rateLimit({
 });
 
 const verifyOTPLimiter = rateLimit({
-  store: new RedisStore({
+  store: redis ? new RedisStore({
     // @ts-expect-error - ioredis type mismatch with rate-limit-redis
     sendCommand: (...args: string[]) => redis.call(...args),
-  }),
+  }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10, // 10 requests per IP per hour
   message: { error: 'Too many verification attempts. Please try again in an hour.' },

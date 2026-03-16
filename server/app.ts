@@ -42,9 +42,9 @@ app.use(xss());
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 200,
-  store: new RedisStore({
+  store: redis ? new RedisStore({
     sendCommand: (command: string, ...args: string[]) => redis.call(command, ...args) as any,
-  }),
+  }) : undefined,
   standardHeaders: true,
   legacyHeaders: false,
 });
