@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import mongoose from 'mongoose';
 import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/user.js';
 import homeownerRoutes from './routes/homeowner.js';
@@ -25,7 +26,20 @@ import { authMiddleware } from '../../middleware/authMiddleware.js';
 const router = Router();
 
 // Health check
-router.get('/health', (req, res) => res.json({ status: 'ok' }));
+router.get('/health', (req, res) => {
+  const dbState = mongoose.connection.readyState;
+  const statusMap: Record<number, string> = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+  
+  res.json({ 
+    status: 'ok',
+    database: statusMap[dbState] || 'unknown'
+  });
+});
 
 // Feature Routes
 router.use('/auth', authRoutes);
