@@ -81,7 +81,7 @@ export default function Layout() {
         >
           <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
             <img 
-              src="/LookRooms logo design with magnifying glass.png" 
+              src="/lookrooms-logo.png" 
               alt="LookRooms" 
               className="w-full h-full object-cover"
               onError={(e) => {
@@ -169,7 +169,7 @@ export default function Layout() {
         >
           <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center overflow-hidden shrink-0">
             <img 
-              src="/LookRooms logo design with magnifying glass.png" 
+              src="/lookrooms-logo.png" 
               alt="LookRooms" 
               className="w-full h-full object-cover"
               onError={(e) => {
