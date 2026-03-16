@@ -4,8 +4,9 @@ import bcrypt from 'bcryptjs';
 import { User } from '../../../models/User.js';
 import { generateTokens, blacklistToken } from '../../../services/authService.js';
 import { nanoid } from 'nanoid';
+import { catchAsync } from '../../../utils/catchAsync.js';
 
-export const login = async (req: Request, res: Response) => {
+export const login = catchAsync(async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -40,9 +41,9 @@ export const login = async (req: Request, res: Response) => {
 
   res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
   res.json({ accessToken });
-};
+});
 
-export const register = async (req: Request, res: Response) => {
+export const register = catchAsync(async (req: Request, res: Response) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
 
@@ -51,18 +52,18 @@ export const register = async (req: Request, res: Response) => {
   const user = new User({ phone, password: hashedPassword, name });
   await user.save();
   res.status(201).json({ message: 'User registered successfully' });
-};
+});
 
-export const refreshToken = async (req: Request, res: Response) => {
+export const refreshToken = catchAsync(async (req: Request, res: Response) => {
   const token = req.cookies.refreshToken;
   if (!token) return res.status(401).json({ error: 'No refresh token' });
   
   // Verify and rotate token
   // ... (implementation details)
   res.json({ message: 'Token refreshed' });
-};
+});
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = catchAsync(async (req: Request, res: Response) => {
   res.clearCookie('refreshToken');
   res.json({ message: 'Logged out' });
-};
+});

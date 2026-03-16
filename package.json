@@ -36,7 +36,6 @@
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
-    "crypto": "^1.0.1",
     "crypto-js": "^4.2.0",
     "csv-writer": "^1.6.0",
     "d3": "^7.9.0",
