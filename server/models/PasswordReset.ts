@@ -27,4 +27,4 @@ const PasswordResetSchema: Schema = new Schema({
 // TTL index — auto delete after expiry
 PasswordResetSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
-export const PasswordReset = mongoose.model<IPasswordReset>('PasswordReset', PasswordResetSchema);
+export const PasswordReset = mongoose.models.PasswordReset || mongoose.model<IPasswordReset>('PasswordReset', PasswordResetSchema);

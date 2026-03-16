@@ -11,7 +11,7 @@ const router = express.Router();
 // Rate limiters
 const sendOTPLimiter = rateLimit({
   store: redis ? new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args),
+    sendCommand: (command: string, ...args: string[]) => redis.call(command, ...args) as any,
   }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 5, // 5 requests per IP per hour
@@ -22,7 +22,7 @@ const sendOTPLimiter = rateLimit({
 
 const verifyOTPLimiter = rateLimit({
   store: redis ? new RedisStore({
-    sendCommand: (...args: string[]) => redis.call(...args),
+    sendCommand: (command: string, ...args: string[]) => redis.call(command, ...args) as any,
   }) : undefined,
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 10, // 10 requests per IP per hour

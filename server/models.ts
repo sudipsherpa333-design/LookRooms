@@ -234,7 +234,7 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ role: 1, verificationLevel: 1 });
 userSchema.index({ "renterProfile.preferences.preferredAreas": 1 });
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema);
 
 const listingSchema = new mongoose.Schema(
   {
@@ -709,7 +709,7 @@ listingSchema.index({ "location.coordinates": "2dsphere" });
 listingSchema.index({ homeowner: 1, status: 1 });
 listingSchema.index({ propertyType: 1, price: 1 });
 
-export const Listing = mongoose.model("Listing", listingSchema);
+export const Listing = mongoose.models.Listing || mongoose.model("Listing", listingSchema);
 
 const applicationSchema = new mongoose.Schema({
   listing: {
@@ -801,7 +801,7 @@ const applicationSchema = new mongoose.Schema({
   decisionAt: Date,
 });
 
-export const Application = mongoose.model("Application", applicationSchema);
+export const Application = mongoose.models.Application || mongoose.model("Application", applicationSchema);
 
 const savedSearchSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -810,7 +810,7 @@ const savedSearchSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export const SavedSearch = mongoose.model("SavedSearch", savedSearchSchema);
+export const SavedSearch = mongoose.models.SavedSearch || mongoose.model("SavedSearch", savedSearchSchema);
 
 const conversationSchema = new mongoose.Schema({
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
@@ -819,7 +819,7 @@ const conversationSchema = new mongoose.Schema({
   isArchived: { type: Boolean, default: false },
 }, { timestamps: true });
 
-export const Conversation = mongoose.model("Conversation", conversationSchema);
+export const Conversation = mongoose.models.Conversation || mongoose.model("Conversation", conversationSchema);
 
 const messageSchema = new mongoose.Schema({
   conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation", required: true },
@@ -849,7 +849,7 @@ const messageSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
-export const Message = mongoose.model("Message", messageSchema);
+export const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);
 
 const contactLogSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
@@ -860,7 +860,7 @@ const contactLogSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
 });
 
-export const ContactLog = mongoose.model("ContactLog", contactLogSchema);
+export const ContactLog = mongoose.models.ContactLog || mongoose.model("ContactLog", contactLogSchema);
 
 const viewedListingSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
@@ -868,7 +868,7 @@ const viewedListingSchema = new mongoose.Schema({
   viewedAt: { type: Date, default: Date.now },
 });
 viewedListingSchema.index({ userId: 1, viewedAt: -1 });
-export const ViewedListing = mongoose.model("ViewedListing", viewedListingSchema);
+export const ViewedListing = mongoose.models.ViewedListing || mongoose.model("ViewedListing", viewedListingSchema);
 
 const paymentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -899,7 +899,7 @@ const paymentSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-export const Payment = mongoose.model("Payment", paymentSchema);
+export const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
 
 const supportTicketSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -917,7 +917,7 @@ const supportTicketSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export const SupportTicket = mongoose.model("SupportTicket", supportTicketSchema);
+export const SupportTicket = mongoose.models.SupportTicket || mongoose.model("SupportTicket", supportTicketSchema);
 
 const feeRuleSchema = new mongoose.Schema({
   minAmount: { type: Number },
@@ -928,7 +928,7 @@ const feeRuleSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 });
 
-export const FeeRule = mongoose.model("FeeRule", feeRuleSchema);
+export const FeeRule = mongoose.models.FeeRule || mongoose.model("FeeRule", feeRuleSchema);
 
 const notificationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -945,7 +945,7 @@ const notificationSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export const Notification = mongoose.model("Notification", notificationSchema);
+export const Notification = mongoose.models.Notification || mongoose.model("Notification", notificationSchema);
 
 export * from "./models/agent/Agent.js";
 export * from "./models/agent/AgentLead.js";
@@ -1000,7 +1000,7 @@ const reviewSchema = new mongoose.Schema({
   incentiveGiven: { type: Boolean, default: false },
   incentiveAmount:{ type: Number }
 }, { timestamps: true });
-export const Review = mongoose.model("Review", reviewSchema);
+export const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 
 const shareTrackingSchema = new mongoose.Schema({
   listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
@@ -1010,7 +1010,7 @@ const shareTrackingSchema = new mongoose.Schema({
   userAgent: { type: String },
   clickCount: { type: Number, default: 0 },
 }, { timestamps: true });
-export const ShareTracking = mongoose.model("ShareTracking", shareTrackingSchema);
+export const ShareTracking = mongoose.models.ShareTracking || mongoose.model("ShareTracking", shareTrackingSchema);
 
 const adminLogSchema = new mongoose.Schema({
   adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -1020,7 +1020,7 @@ const adminLogSchema = new mongoose.Schema({
   details: { type: Object },
   ipAddress: { type: String },
 }, { timestamps: true });
-export const AdminLog = mongoose.model("AdminLog", adminLogSchema);
+export const AdminLog = mongoose.models.AdminLog || mongoose.model("AdminLog", adminLogSchema);
 
 const maintenanceRequestSchema = new mongoose.Schema({
   listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
@@ -1036,7 +1036,7 @@ const maintenanceRequestSchema = new mongoose.Schema({
   resolvedAt: { type: Date },
 }, { timestamps: true });
 
-export const MaintenanceRequest = mongoose.model("MaintenanceRequest", maintenanceRequestSchema);
+export const MaintenanceRequest = mongoose.models.MaintenanceRequest || mongoose.model("MaintenanceRequest", maintenanceRequestSchema);
 
 const propertySchema = new mongoose.Schema({
   ownerId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -1048,7 +1048,7 @@ const propertySchema = new mongoose.Schema({
   rooms:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }]
 }, { timestamps: true });
 
-export const Property = mongoose.model("Property", propertySchema);
+export const Property = mongoose.models.Property || mongoose.model("Property", propertySchema);
 
 const boostSchema = new mongoose.Schema({
   listingId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
@@ -1063,7 +1063,7 @@ const boostSchema = new mongoose.Schema({
   isActive:    { type: Boolean, default: true }
 }, { timestamps: true });
 
-export const Boost = mongoose.model("Boost", boostSchema);
+export const Boost = mongoose.models.Boost || mongoose.model("Boost", boostSchema);
 
 const subscriptionSchema = new mongoose.Schema({
   userId:       { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -1077,7 +1077,7 @@ const subscriptionSchema = new mongoose.Schema({
   invoices:     [{ date: Date, amount: Number, url: String }]
 }, { timestamps: true });
 
-export const Subscription = mongoose.model("Subscription", subscriptionSchema);
+export const Subscription = mongoose.models.Subscription || mongoose.model("Subscription", subscriptionSchema);
 
 const bookingSchema = new mongoose.Schema({
   listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
@@ -1100,4 +1100,4 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index({ listingId: 1, tenantId: 1, status: 1 });
 
-export const Booking = mongoose.model("Booking", bookingSchema);
+export const Booking = mongoose.models.Booking || mongoose.model("Booking", bookingSchema);

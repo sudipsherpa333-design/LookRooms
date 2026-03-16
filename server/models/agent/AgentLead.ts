@@ -33,4 +33,4 @@ const agentLeadSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
-export const AgentLead = mongoose.model('AgentLead', agentLeadSchema);
+export const AgentLead = mongoose.models.AgentLead || mongoose.model('AgentLead', agentLeadSchema);

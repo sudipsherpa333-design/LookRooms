@@ -26,4 +26,4 @@ const userTrustScoreSchema = new Schema({
   lastCalculatedAt: Date
 }, { timestamps: true });
 
-export const UserTrustScore = mongoose.model("UserTrustScore", userTrustScoreSchema);
+export const UserTrustScore = mongoose.models.UserTrustScore || mongoose.model("UserTrustScore", userTrustScoreSchema);

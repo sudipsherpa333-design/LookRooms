@@ -29,4 +29,4 @@ const scamReportSchema = new Schema({
   resolvedAt: Date
 }, { timestamps: true });
 
-export const ScamReport = mongoose.model("ScamReport", scamReportSchema);
+export const ScamReport = mongoose.models.ScamReport || mongoose.model("ScamReport", scamReportSchema);

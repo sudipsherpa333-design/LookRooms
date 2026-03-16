@@ -20,7 +20,7 @@ process.on("uncaughtException", (err) => {
 });
 
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://sudipsherpa333_db_user:hiMLJK6biQK32SMv@cluster0.jjwwgox.mongodb.net/lookrooms?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://sudipsherpa333_db_user:sudip981331@cluster0.jjwwgox.mongodb.net/lookrooms?retryWrites=true&w=majority&appName=Cluster0";
 const JWT_SECRET = process.env.JWT_SECRET || "fallback-secret-for-dev-only";
 
 if (!MONGODB_URI || !JWT_SECRET) {
@@ -51,25 +51,43 @@ async function startServer() {
   setIo(io);
 
   // MongoDB Connection
-  if (mongoose.connection.readyState === 0) {
-    mongoose.connect(MONGODB_URI, {
-      maxPoolSize: 50,
-      wtimeoutMS: 2500,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-    }).then(() => {
-      console.log("Connected to MongoDB (Enterprise Ready)");
-      
-      // Cron Jobs (Skip on Vercel)
-      if (!process.env.VERCEL) {
-        cron.schedule('*/5 * * * *', cleanupExpiredLocks);
-        setupCronJobs();
+  const connectDB = async () => {
+    if (mongoose.connection.readyState === 0) {
+      console.log("Attempting to connect to MongoDB...");
+      try {
+        await mongoose.connect(MONGODB_URI, {
+          maxPoolSize: 50,
+          wtimeoutMS: 2500,
+          serverSelectionTimeoutMS: 5000,
+          socketTimeoutMS: 45000,
+        });
+        console.log("Connected to MongoDB (Enterprise Ready)");
+        
+        // Cron Jobs (Skip on Vercel)
+        if (!process.env.VERCEL) {
+          cron.schedule('*/5 * * * *', cleanupExpiredLocks);
+          setupCronJobs();
+        }
+      } catch (err) {
+        console.error("MongoDB connection error:", err);
+        if (!process.env.VERCEL) process.exit(1);
       }
-    }).catch(err => {
-      console.error("MongoDB connection error:", err);
-      if (!process.env.VERCEL) process.exit(1);
-    });
-  }
+    }
+  };
+
+  await connectDB();
+
+  // Middleware to ensure DB is connected
+  app.use((req, res, next) => {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        success: false,
+        message: "Database connection is not established. Please try again in a few seconds.",
+        readyState: mongoose.connection.readyState
+      });
+    }
+    next();
+  });
 
   // Socket.io Logic (Skip on Vercel)
   if (!process.env.VERCEL) {

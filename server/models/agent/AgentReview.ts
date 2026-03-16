@@ -23,4 +23,4 @@ const agentReviewSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-export const AgentReview = mongoose.model('AgentReview', agentReviewSchema);
+export const AgentReview = mongoose.models.AgentReview || mongoose.model('AgentReview', agentReviewSchema);

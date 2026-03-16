@@ -45,4 +45,4 @@ const applicationSchema = new mongoose.Schema({
   decisionAt: Date,
 });
 
-export const Application = mongoose.model("Application", applicationSchema);
+export const Application = mongoose.models.Application || mongoose.model("Application", applicationSchema);

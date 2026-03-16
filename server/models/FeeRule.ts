@@ -25,4 +25,4 @@ const FeeRuleSchema = new Schema({
   updatedAt: { type: Date, default: Date.now }
 });
 
-export const FeeRule = mongoose.model<IFeeRule>('FeeRule', FeeRuleSchema);
+export const FeeRule = mongoose.models.FeeRule || mongoose.model<IFeeRule>('FeeRule', FeeRuleSchema);

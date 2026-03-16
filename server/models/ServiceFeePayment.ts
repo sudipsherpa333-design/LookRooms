@@ -88,4 +88,4 @@ const ServiceFeePaymentSchema = new Schema({
   updatedAt: { type: Date }
 });
 
-export const ServiceFeePayment = mongoose.model<IServiceFeePayment>('ServiceFeePayment', ServiceFeePaymentSchema);
+export const ServiceFeePayment = mongoose.models.ServiceFeePayment || mongoose.model<IServiceFeePayment>('ServiceFeePayment', ServiceFeePaymentSchema);

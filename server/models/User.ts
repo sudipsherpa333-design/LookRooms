@@ -8,9 +8,7 @@ const userSchema = new mongoose.Schema(
     phone: { 
       type: String, 
       unique: true, 
-      required: true,
-      set: (val: string) => val ? encrypt(val) : val,
-      get: (val: string) => val ? decrypt(val) : val
+      required: true
     },
     password: { type: String, required: true },
     role: {
@@ -258,4 +256,4 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ role: 1, verificationLevel: 1 });
 userSchema.index({ "renterProfile.preferences.preferredAreas": 1 });
 
-export const User = mongoose.model("User", userSchema);
+export const User = mongoose.models.User || mongoose.model("User", userSchema);

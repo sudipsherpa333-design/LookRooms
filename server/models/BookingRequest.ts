@@ -54,4 +54,4 @@ const BookingRequestSchema = new Schema({
   updatedAt: { type: Date }
 });
 
-export const BookingRequest = mongoose.model<IBookingRequest>('BookingRequest', BookingRequestSchema);
+export const BookingRequest = mongoose.models.BookingRequest || mongoose.model<IBookingRequest>('BookingRequest', BookingRequestSchema);

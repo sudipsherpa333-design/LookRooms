@@ -74,4 +74,4 @@ const agentSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-export const Agent = mongoose.model('Agent', agentSchema);
+export const Agent = mongoose.models.Agent || mongoose.model('Agent', agentSchema);

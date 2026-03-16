@@ -26,7 +26,7 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
-    const messages = Object.values(err.errors).map((val: any) => val.message);
+    const messages = err.errors ? Object.values(err.errors).map((val: any) => val.message) : [err.message];
     message = `Invalid input data. ${messages.join('. ')}`;
     statusCode = 400;
     status = 'fail';

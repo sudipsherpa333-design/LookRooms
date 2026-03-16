@@ -44,4 +44,4 @@ systemSettingsSchema.pre('save', async function(this: any, next: any) {
   next();
 });
 
-export const SystemSettings = mongoose.model<ISystemSettings>('SystemSettings', systemSettingsSchema);
+export const SystemSettings = mongoose.models.SystemSettings || mongoose.model<ISystemSettings>('SystemSettings', systemSettingsSchema);

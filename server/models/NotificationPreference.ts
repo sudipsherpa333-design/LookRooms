@@ -41,4 +41,4 @@ const notificationPreferenceSchema = new mongoose.Schema({
   updatedAt: { type: Date }
 });
 
-export const NotificationPreference = mongoose.model("NotificationPreference", notificationPreferenceSchema);
+export const NotificationPreference = mongoose.models.NotificationPreference || mongoose.model("NotificationPreference", notificationPreferenceSchema);

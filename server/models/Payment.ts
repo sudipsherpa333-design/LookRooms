@@ -29,4 +29,4 @@ const paymentSchema = new mongoose.Schema({
   updatedAt: { type: Date, default: Date.now }
 }, { timestamps: true });
 
-export const Payment = mongoose.model("Payment", paymentSchema);
+export const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);

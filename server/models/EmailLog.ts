@@ -18,4 +18,4 @@ const emailLogSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export const EmailLog = mongoose.model("EmailLog", emailLogSchema);
+export const EmailLog = mongoose.models.EmailLog || mongoose.model("EmailLog", emailLogSchema);

@@ -7,4 +7,4 @@ const savedSearchSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export const SavedSearch = mongoose.model("SavedSearch", savedSearchSchema);
+export const SavedSearch = mongoose.models.SavedSearch || mongoose.model("SavedSearch", savedSearchSchema);

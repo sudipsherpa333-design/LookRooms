@@ -44,4 +44,4 @@ const bookingStatusSchema = new Schema({
   }
 }, { timestamps: true });
 
-export const BookingStatus = mongoose.model("BookingStatus", bookingStatusSchema);
+export const BookingStatus = mongoose.models.BookingStatus || mongoose.model("BookingStatus", bookingStatusSchema);

@@ -21,4 +21,4 @@ const bookingSchema = new mongoose.Schema({
 
 bookingSchema.index({ listingId: 1, tenantId: 1, status: 1 });
 
-export const Booking = mongoose.model("Booking", bookingSchema);
+export const Booking = mongoose.models.Booking || mongoose.model("Booking", bookingSchema);

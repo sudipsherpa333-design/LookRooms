@@ -424,4 +424,4 @@ listingSchema.index({ "location.city": 1, propertyType: 1, price: 1, status: 1 }
 listingSchema.index({ homeowner: 1, status: 1, createdAt: -1 });
 listingSchema.index({ "location.coordinates": "2dsphere", price: 1 });
 
-export const Listing = mongoose.model("Listing", listingSchema);
+export const Listing = mongoose.models.Listing || mongoose.model("Listing", listingSchema);

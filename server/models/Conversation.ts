@@ -7,4 +7,4 @@ const conversationSchema = new mongoose.Schema({
   isArchived: { type: Boolean, default: false },
 }, { timestamps: true });
 
-export const Conversation = mongoose.model("Conversation", conversationSchema);
+export const Conversation = mongoose.models.Conversation || mongoose.model("Conversation", conversationSchema);
