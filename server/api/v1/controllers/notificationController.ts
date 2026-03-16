@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Notification } from '../../../models/Notification';
-import { NotificationPreference } from '../../../models/NotificationPreference';
+import { Notification } from '../../../models/Notification.js';
+import { NotificationPreference } from '../../../models/NotificationPreference.js';
 
 export const getNotifications = async (req: Request, res: Response) => {
   const { page = 1, limit = 20, category, isRead } = req.query;
