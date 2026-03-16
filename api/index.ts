@@ -3,11 +3,11 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import cron from "node-cron";
-import app from "./server/app.js";
-import { setIo } from "./server/utils/socketEmitter.js";
-import { setupCronJobs } from "./server/jobs/bookingJobs.js";
-import { cleanupExpiredLocks } from "./server/services/paymentService.js";
-import { User, Message, Conversation, Notification as NotificationModel } from "./server/models/index.js";
+import app from "../server/app.js";
+import { setIo } from "../server/utils/socketEmitter.js";
+import { setupCronJobs } from "../server/jobs/bookingJobs.js";
+import { cleanupExpiredLocks } from "../server/services/paymentService.js";
+import { User, Message, Conversation, Notification as NotificationModel } from "../server/models/index.js";
 import jwt from "jsonwebtoken";
 import { createServer as createViteServer } from "vite";
 import path from "path";
@@ -32,7 +32,7 @@ let httpServer: ReturnType<typeof createServer>;
 
 async function startServer() {
   // Vite middleware for development
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
