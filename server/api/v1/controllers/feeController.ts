@@ -9,21 +9,19 @@ export const getFeePreview = async (req: Request, res: Response) => {
     const listing = await Listing.findById(listingId);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
-    const rule = await FeeRule.findOne({ roomType: listing.roomType, isActive: true });
-    if (!rule) return res.status(404).json({ error: 'Fee rule not found' });
-
-    const serviceFee = await calculateServiceFee(listing.roomType);
+    const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);
     
     res.json({
-      roomType: listing.roomType,
-      roomTypeLabel: rule.roomTypeLabel,
+      roomType: listing.propertyType || listing.roomType,
+      roomTypeLabel: listing.propertyType || listing.roomType,
       monthlyRent: listing.price,
+      depositAmount: listing.securityDeposit || 0,
       serviceFee: serviceFee,
-      feeLabel: rule.feeLabel,
+      feeLabel: 'Platform connection fee',
       breakdown: {
         platformFee: `Rs ${serviceFee.toLocaleString()} (one-time, paid to LookRooms)`,
         rentPayment: `Rs ${listing.price.toLocaleString()}/month paid directly to landlord`,
-        whenCharged: "Only after landlord accepts your request",
+        whenCharged: "Pay now to send your booking request",
         refundPolicy: "Full refund if landlord rejects or no response in 48hrs"
       }
     });

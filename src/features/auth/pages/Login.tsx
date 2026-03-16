@@ -9,12 +9,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showForgot, setShowForgot] = useState(false);
-  const [resetStep, setResetStep] = useState(1); // 1: phone, 2: code & new pass
-  const [resetPhone, setResetPhone] = useState("");
-  const [recoveryCode, setRecoveryCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [resetSuccess, setResetSuccess] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -30,66 +24,6 @@ export default function Login() {
       setError(result.error || "Login failed");
     }
     setLoading(false);
-  };
-
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/forgot-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone: resetPhone }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setResetStep(2);
-        // For demo, we show the code in the UI
-        setResetSuccess(`Recovery code: ${data.recoveryCode} (Sent to your phone)`);
-      } else {
-        setError(data.error || "Failed to process request");
-      }
-    } catch (error) {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/reset-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          phone: resetPhone, 
-          recoveryCode, 
-          newPassword 
-        }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setResetSuccess("Password reset successful! You can now login.");
-        setTimeout(() => {
-          setShowForgot(false);
-          setResetStep(1);
-          setResetPhone("");
-          setRecoveryCode("");
-          setNewPassword("");
-          setResetSuccess("");
-        }, 3000);
-      } else {
-        setError(data.error || "Failed to reset password");
-      }
-    } catch (error) {
-      setError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
   };
 
   return (
@@ -127,15 +61,7 @@ export default function Login() {
             </div>
           )}
 
-          {resetSuccess && (
-            <div className="mb-4 bg-emerald-50 border border-emerald-200 text-emerald-700 px-4 py-3 rounded-xl flex items-center gap-2 text-sm">
-              <AlertCircle className="w-5 h-5 shrink-0" />
-              <p>{resetSuccess}</p>
-            </div>
-          )}
-
-          {!showForgot ? (
-            <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-6" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-stone-700">
                   Phone Number
@@ -179,13 +105,12 @@ export default function Login() {
               </div>
 
               <div className="flex items-center justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowForgot(true)}
+                <Link
+                  to="/forgot-password"
                   className="text-sm font-medium text-emerald-600 hover:text-emerald-500"
                 >
                   Forgot your password?
-                </button>
+                </Link>
               </div>
 
               <div>
@@ -198,84 +123,6 @@ export default function Login() {
                 </button>
               </div>
             </form>
-          ) : (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-stone-900">Reset Password</h3>
-                <button 
-                  onClick={() => {
-                    setShowForgot(false);
-                    setResetStep(1);
-                    setError("");
-                  }}
-                  className="text-sm text-stone-500 hover:text-stone-700"
-                >
-                  Back to login
-                </button>
-              </div>
-
-              {resetStep === 1 ? (
-                <form onSubmit={handleForgotPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-stone-700">
-                      Enter your phone number
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={resetPhone}
-                      onChange={(e) => setResetPhone(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-3 border border-stone-300 rounded-xl shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                      placeholder="9800000000"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400"
-                  >
-                    {loading ? "Processing..." : "Send Recovery Code"}
-                  </button>
-                </form>
-              ) : (
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-stone-700">
-                      Recovery Code
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      value={recoveryCode}
-                      onChange={(e) => setRecoveryCode(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-3 border border-stone-300 rounded-xl shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                      placeholder="6-digit code"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-stone-700">
-                      New Password
-                    </label>
-                    <input
-                      type="password"
-                      required
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                      className="mt-1 appearance-none block w-full px-3 py-3 border border-stone-300 rounded-xl shadow-sm placeholder-stone-400 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
-                      placeholder="Min 6 characters"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400"
-                  >
-                    {loading ? "Resetting..." : "Reset Password"}
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
 
           <div className="mt-6 text-center text-xs text-stone-500">
             <p>

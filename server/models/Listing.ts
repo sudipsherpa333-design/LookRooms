@@ -327,6 +327,13 @@ const listingSchema = new mongoose.Schema(
     sunExposure: String,
     genderPreference: String,
     foodPreference: String,
+    listedBy: { type: String, enum: ['owner', 'agent'], default: 'owner' },
+    agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
+    actualOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    agentServiceFee: { type: Number },
+    agentFeeLabel: { type: String },
+    agentFeeNote: { type: String },
+    isAgentListing: { type: Boolean, default: false },
   },
   {
     toJSON: { virtuals: true },
@@ -412,6 +419,7 @@ listingSchema.pre("validate", function () {
   }
 });
 
+listingSchema.index({ status: 1, "location.city": 1, price: 1 });
 listingSchema.index({ "location.city": 1, propertyType: 1, price: 1, status: 1 });
 listingSchema.index({ homeowner: 1, status: 1, createdAt: -1 });
 listingSchema.index({ "location.coordinates": "2dsphere", price: 1 });

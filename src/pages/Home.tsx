@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -27,7 +27,7 @@ import ListingMap from "../components/ListingMap";
 import { Skeleton } from "../components/Skeleton";
 
 const SwipeCard = ({ listing, onSwipeLeft, onSwipeRight, isFront }: any) => {
-  // ... (keep existing SwipeCard component)
+  const [isSaving, setIsSaving] = useState(false);
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-10, 10]);
   const opacity = useTransform(x, [-300, -250, 0, 250, 300], [0, 1, 1, 1, 0]);
@@ -39,19 +39,28 @@ const SwipeCard = ({ listing, onSwipeLeft, onSwipeRight, isFront }: any) => {
   const likeScale = useTransform(x, [0, 100], [0.5, 1.2]);
   const nopeScale = useTransform(x, [0, -100], [0.5, 1.2]);
 
-  const handleDragEnd = (event: any, info: any) => {
+  const handleDragEnd = async (event: any, info: any) => {
     if (info.offset.x > 120) {
-      onSwipeRight(listing.id || listing._id);
+      setIsSaving(true);
+      await onSwipeRight(listing.id || listing._id);
+      setIsSaving(false);
     } else if (info.offset.x < -120) {
       onSwipeLeft(listing.id || listing._id);
     }
+  };
+
+  const handleRightClick = async (e: any) => {
+    e.stopPropagation();
+    setIsSaving(true);
+    await onSwipeRight(listing.id || listing._id);
+    setIsSaving(false);
   };
 
   return (
     <motion.div
       className="absolute w-full h-full rounded-[2.5rem] overflow-hidden bg-white shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-stone-100 origin-bottom cursor-grab active:cursor-grabbing"
       style={{ x, rotate, opacity, scale, zIndex: isFront ? 10 : 0 }}
-      drag={isFront ? "x" : false}
+      drag={isFront && !isSaving ? "x" : false}
       dragConstraints={{ left: 0, right: 0 }}
       dragElastic={0.9}
       onDragEnd={handleDragEnd}
@@ -151,7 +160,8 @@ const SwipeCard = ({ listing, onSwipeLeft, onSwipeRight, isFront }: any) => {
       >
         <button
           onClick={(e) => { e.stopPropagation(); onSwipeLeft(listing.id || listing._id); }}
-          className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-xl group"
+          disabled={isSaving}
+          className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all duration-300 shadow-xl group disabled:opacity-50"
         >
           <X className="w-8 h-8 group-hover:scale-110 transition-transform" />
         </button>
@@ -163,10 +173,15 @@ const SwipeCard = ({ listing, onSwipeLeft, onSwipeRight, isFront }: any) => {
           <Info className="w-5 h-5" />
         </Link>
         <button
-          onClick={(e) => { e.stopPropagation(); onSwipeRight(listing.id || listing._id); }}
-          className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-xl group"
+          onClick={handleRightClick}
+          disabled={isSaving}
+          className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-full flex items-center justify-center text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all duration-300 shadow-xl group disabled:opacity-50"
         >
-          <Heart className="w-8 h-8 fill-current group-hover:scale-110 transition-transform" />
+          {isSaving ? (
+            <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+          ) : (
+            <Heart className="w-8 h-8 fill-current group-hover:scale-110 transition-transform" />
+          )}
         </button>
       </motion.div>
     </motion.div>
@@ -187,6 +202,7 @@ export default function Home() {
     foodPreference: "",
     numberOfRooms: "",
     amenities: [] as string[],
+    searchPolygon: null as [number, number][] | null,
   });
   const [showFilters, setShowFilters] = useState(false);
   const [viewMode, setViewMode] = useState<"swipe" | "map">("swipe");
@@ -201,24 +217,28 @@ export default function Home() {
           if ((value as string[]).length > 0) {
             queryParams.append(key, (value as string[]).join(","));
           }
+        } else if (key === "searchPolygon") {
+          if (value) {
+            queryParams.append(key, JSON.stringify(value));
+          }
         } else if (value) {
           queryParams.append(key, value.toString());
         }
       });
 
-      const res = await fetch(`/api/listings?${queryParams.toString()}`);
+      const res = await fetch(`/api/search/advanced?${queryParams.toString()}`);
       if (!res.ok) throw new Error("Failed to fetch listings");
       const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      return data.listings || [];
     },
   });
 
   // Sync local state for swipe interactions
   // In a real app, we would use optimistic updates with react-query
   // For now, update local state when listings change
-  useState(() => {
+  useEffect(() => {
     setLocalListings(listings);
-  });
+  }, [listings]);
 
   const handleSwipeLeft = (id: string) => {
     setLocalListings((prev) => prev.filter((l) => (l.id || l._id) !== id));
@@ -251,6 +271,7 @@ export default function Home() {
       foodPreference: "",
       numberOfRooms: "",
       amenities: [],
+      searchPolygon: null,
     });
   };
 
@@ -567,7 +588,10 @@ export default function Home() {
             <Skeleton className="w-full h-full" />
           </div>
         ) : viewMode === "map" ? (
-          <ListingMap listings={listings} />
+          <ListingMap 
+            listings={listings} 
+            onSearchArea={(polygon) => setFilters(prev => ({ ...prev, searchPolygon: polygon }))}
+          />
         ) : (
           <div className="h-full flex flex-col gap-4">
             {/* Swipe Cards */}
@@ -619,32 +643,44 @@ export default function Home() {
                 <Link to="/listings" className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">View All</Link>
               </div>
               <div className="flex gap-4 px-2 pb-6 overflow-x-auto scrollbar-hide snap-x">
-                {listings.map((listing) => (
-                  <Link
-                    key={listing.id || listing._id}
-                    to={`/listing/${listing.id || listing._id}`}
-                    className="w-48 shrink-0 bg-white rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-stone-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 snap-start"
-                  >
-                    <div className="relative h-28">
-                      <img
-                        src={listing.images?.[0]?.url || "https://picsum.photos/seed/room/300/200"}
-                        alt={listing.title}
-                        className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                      <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
-                        Rs. {listing.price.toLocaleString()}
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="w-48 shrink-0 bg-white rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-stone-100 overflow-hidden snap-start">
+                      <Skeleton className="h-28 w-full" />
+                      <div className="p-3 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
                       </div>
                     </div>
-                    <div className="p-3">
-                      <h4 className="font-bold text-xs text-stone-900 truncate mb-1">{listing.title}</h4>
-                      <div className="flex items-center gap-1 text-[10px] text-stone-400 font-medium">
-                        <MapPin className="w-3 h-3 text-emerald-500" />
-                        <span className="truncate">{listing.area}</span>
+                  ))
+                ) : (
+                  listings.map((listing) => (
+                    <Link
+                      key={listing.id || listing._id}
+                      to={`/listing/${listing.id || listing._id}`}
+                      className="w-48 shrink-0 bg-white rounded-3xl shadow-[0_10px_30px_rgba(0,0,0,0.05)] border border-stone-100 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300 snap-start"
+                    >
+                      <div className="relative h-28">
+                        <img
+                          src={listing.images?.[0]?.url || "https://picsum.photos/seed/room/300/200"}
+                          alt={listing.title}
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-md text-white text-[9px] font-bold px-2 py-0.5 rounded-full">
+                          Rs. {listing.price.toLocaleString()}
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                ))}
+                      <div className="p-3">
+                        <h4 className="font-bold text-xs text-stone-900 truncate mb-1">{listing.title}</h4>
+                        <div className="flex items-center gap-1 text-[10px] text-stone-400 font-medium">
+                          <MapPin className="w-3 h-3 text-emerald-500" />
+                          <span className="truncate">{listing.area}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))
+                )}
               </div>
             </div>
           </div>

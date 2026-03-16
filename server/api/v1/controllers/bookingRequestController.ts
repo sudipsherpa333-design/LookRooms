@@ -56,22 +56,15 @@ export const createBookingRequest = async (req: any, res: Response) => {
       return res.status(400).json({ error: 'You already have an active request for this room' });
     }
 
-    const rule = await FeeRule.findOne({ roomType: listing.roomType, isActive: true }).session(session);
-    if (!rule) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({ error: 'Fee rule not found' });
-    }
-
-    const serviceFee = await calculateServiceFee(listing.roomType);
+    const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);
 
     const bookingRequest = new BookingRequest({
       listingId,
       tenantId,
       landlordId: listing.landlordId,
-      roomType: listing.roomType,
+      roomType: listing.propertyType || listing.roomType,
       monthlyRent: listing.price,
-      roomAddress: (listing as any).address || listing.location.address,
+      roomAddress: (listing as any).address || (listing.location && listing.location.address) || "",
       moveInDate,
       stayDuration,
       occupants,
@@ -86,11 +79,14 @@ export const createBookingRequest = async (req: any, res: Response) => {
       listingId,
       tenantId,
       landlordId: listing.landlordId,
-      roomType: listing.roomType,
-      roomTypeLabel: rule.roomTypeLabel,
+      roomType: listing.propertyType || listing.roomType,
+      roomTypeLabel: listing.propertyType || listing.roomType,
       monthlyRent: listing.price,
+      depositAmount: listing.securityDeposit || 0,
+      rentPaidTo: 'landlord_directly',
       serviceFee,
-      feeLabel: rule.feeLabel,
+      feeLabel: 'Platform connection fee',
+      feeDescription: 'One-time fee to connect with the landlord and secure the room.',
       paymentDeadline: bookingRequest.paymentDeadline,
       idempotencyKey
     });
@@ -105,10 +101,9 @@ export const createBookingRequest = async (req: any, res: Response) => {
     res.json({
       bookingRequestId: bookingRequest._id,
       feePaymentId: payment._id,
-      roomType: listing.roomType,
-      roomTypeLabel: rule.roomTypeLabel,
+      roomType: listing.propertyType || listing.roomType,
       serviceFee,
-      feeLabel: rule.feeLabel,
+      feeLabel: 'Platform connection fee',
       monthlyRent: listing.price,
       paymentDeadline: bookingRequest.paymentDeadline,
       message: `Pay Rs ${serviceFee.toLocaleString()} service fee to send your booking request`

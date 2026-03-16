@@ -264,11 +264,16 @@ export default function Dashboard() {
                   <button
                     type="submit"
                     disabled={kycSubmitting}
-                    className="w-full bg-stone-900 hover:bg-stone-800 text-white font-medium py-2.5 rounded-xl transition-colors text-sm disabled:bg-stone-400"
+                    className="w-full bg-stone-900 hover:bg-stone-800 text-white font-medium py-2.5 rounded-xl transition-colors text-sm disabled:bg-stone-400 flex items-center justify-center gap-2"
                   >
-                    {kycSubmitting
-                      ? "Submitting..."
-                      : "Submit for Verification"}
+                    {kycSubmitting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit for Verification"
+                    )}
                   </button>
                 </form>
               ) : null}
@@ -287,9 +292,13 @@ export default function Dashboard() {
                 Active
               </span>
             </div>
-            <div className="text-2xl font-bold text-stone-900">
-              {stats?.activeListings || 0}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-stone-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-stone-900">
+                {stats?.activeListings || 0}
+              </div>
+            )}
           </div>
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm">
             <div className="flex items-center gap-2 text-stone-500 mb-2">
@@ -298,9 +307,13 @@ export default function Dashboard() {
                 Views
               </span>
             </div>
-            <div className="text-2xl font-bold text-stone-900">
-              {stats?.totalViews || 0}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-stone-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-stone-900">
+                {stats?.totalViews || 0}
+              </div>
+            )}
           </div>
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm">
             <div className="flex items-center gap-2 text-stone-500 mb-2">
@@ -309,9 +322,13 @@ export default function Dashboard() {
                 Inquiries
               </span>
             </div>
-            <div className="text-2xl font-bold text-stone-900">
-              {stats?.totalInquiries || 0}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-stone-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-stone-900">
+                {stats?.totalInquiries || 0}
+              </div>
+            )}
           </div>
           <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-2 text-emerald-700 mb-2">
@@ -320,7 +337,11 @@ export default function Dashboard() {
                 Earnings
               </span>
             </div>
-            <div className="text-xl font-bold text-emerald-900">Rs. 24k</div>
+            {loading ? (
+              <div className="h-8 w-24 bg-emerald-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-xl font-bold text-emerald-900">Rs. 24k</div>
+            )}
           </div>
         </div>
       ) : (
@@ -332,9 +353,13 @@ export default function Dashboard() {
                 Pending
               </span>
             </div>
-            <div className="text-2xl font-bold text-stone-900">
-              {userApplications.filter(a => a.status === 'pending').length}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-stone-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-stone-900">
+                {userApplications.filter(a => a.status === 'pending').length}
+              </div>
+            )}
           </div>
           <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100 shadow-sm">
             <div className="flex items-center gap-2 text-emerald-700 mb-2">
@@ -343,9 +368,13 @@ export default function Dashboard() {
                 Accepted
               </span>
             </div>
-            <div className="text-2xl font-bold text-emerald-900">
-              {userApplications.filter(a => a.status === 'accepted').length}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-emerald-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-emerald-900">
+                {userApplications.filter(a => a.status === 'accepted').length}
+              </div>
+            )}
           </div>
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm">
             <div className="flex items-center gap-2 text-stone-500 mb-2">
@@ -354,9 +383,13 @@ export default function Dashboard() {
                 Total Apps
               </span>
             </div>
-            <div className="text-2xl font-bold text-stone-900">
-              {userApplications.length}
-            </div>
+            {loading ? (
+              <div className="h-8 w-16 bg-stone-200 rounded animate-pulse"></div>
+            ) : (
+              <div className="text-2xl font-bold text-stone-900">
+                {userApplications.length}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -480,11 +513,24 @@ export default function Dashboard() {
       )}
 
       {/* Recently Viewed */}
-      {recentlyViewed.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-bold text-stone-900 mb-4">Recently Viewed</h2>
-          <div className="space-y-3">
-            {recentlyViewed.map((listing) => (
+      <div className="mb-8">
+        <h2 className="text-lg font-bold text-stone-900 mb-4">Recently Viewed</h2>
+        <div className="space-y-3">
+          {loading ? (
+            [1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="animate-pulse bg-white p-3 rounded-2xl border border-stone-100 flex gap-3"
+              >
+                <div className="w-20 h-20 bg-stone-200 rounded-xl shrink-0"></div>
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-4 bg-stone-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-stone-200 rounded w-1/2"></div>
+                </div>
+              </div>
+            ))
+          ) : recentlyViewed.length > 0 ? (
+            recentlyViewed.map((listing) => (
               <Link
                 key={listing.id || listing._id}
                 to={`/listing/${listing.id || listing._id}`}
@@ -516,10 +562,16 @@ export default function Dashboard() {
                   </div>
                 </div>
               </Link>
-            ))}
-          </div>
+            ))
+          ) : (
+            <div className="text-center py-8 bg-white rounded-2xl border border-stone-200 border-dashed">
+              <p className="text-stone-500 text-sm">
+                You haven't viewed any listings yet.
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Settings Links */}
       <div className="bg-white rounded-3xl border border-stone-200 shadow-sm overflow-hidden">

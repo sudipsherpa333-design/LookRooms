@@ -31,11 +31,12 @@ export const respondToBooking = async (req: any, res: Response) => {
 
       // Trigger refund logic
       const payment = await ServiceFeePayment.findOne({ bookingRequestId: booking._id });
-      if (payment) {
-        payment.refundStatus = 'pending';
+      if (payment && payment.paymentStatus === 'paid') {
+        payment.refundStatus = 'initiated';
         payment.refundReason = 'landlord_rejected';
         await payment.save();
         // Call refund API
+        console.log(`[REFUND] Initiated for payment ${payment._id} due to landlord rejection`);
       }
 
       await Listing.findByIdAndUpdate(booking.listingId, { lockStatus: 'available' });

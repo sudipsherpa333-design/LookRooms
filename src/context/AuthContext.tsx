@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-type Role = "user" | "homeowner" | "admin";
+type Role = "user" | "homeowner" | "admin" | "agent";
 
 interface User {
   id: string;
@@ -14,6 +14,7 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   login: (
     phone: string,
     password: string,
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUser = localStorage.getItem("krf_user");
@@ -44,6 +46,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } else {
       document.documentElement.dataset.theme = "user";
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, refreshUser }}
+      value={{ user, loading, login, register, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>

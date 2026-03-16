@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import { User, Listing, Application, Payment, ContactLog, SupportTicket } from "../../../models/index.js";
 import { authMiddleware, adminMiddleware } from "../../../middleware/authMiddleware.js";
 import { getAllPayments, processRefund, getPaymentAnalytics } from "../controllers/adminPaymentController.js";
+import { getSystemSettings, updateSystemSettings } from "../controllers/adminSettingsController.js";
 
 const router = express.Router();
 
@@ -9,10 +10,15 @@ const router = express.Router();
 router.use(authMiddleware);
 router.use(adminMiddleware);
 
+// System Settings
+router.get("/settings", getSystemSettings);
+router.put("/settings", updateSystemSettings);
+
 // Payment Management
 router.get("/payments/all", getAllPayments);
 router.post("/payments/refund/:paymentId", processRefund);
 router.get("/payments/analytics", getPaymentAnalytics);
+
 
 // User Management
 router.get("/users", async (req, res) => {

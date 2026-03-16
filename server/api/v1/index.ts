@@ -13,6 +13,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import supportRoutes from './routes/support.js';
 import notificationRoutes from './routes/notification.js';
 import webhookRoutes from './routes/webhook.js';
+import agentRoutes from './routes/agentRoutes.js';
 import * as advancedSearch from './controllers/advancedSearchController.js';
 import * as listingQuality from './controllers/listingQualityController.js';
 import * as pricingEngine from './controllers/pricingEngineController.js';
@@ -41,6 +42,7 @@ router.use('/fee-payment', feePaymentRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/notifications', notificationRoutes);
 router.use('/webhooks', webhookRoutes);
+router.use('/', agentRoutes);
 
 // Advanced Feature Routes
 router.get('/search/advanced', advancedSearch.advancedSearch);

@@ -76,8 +76,9 @@ export default function AdminDashboard() {
   const [bookings, setBookings] = useState<any[]>([]);
   const [chatLogs, setChatLogs] = useState<any[]>([]);
   const [supportTickets, setSupportTickets] = useState<any[]>([]);
+  const [systemSettings, setSystemSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"listings" | "kyc" | "users" | "all_listings" | "payments" | "bookings" | "chat_logs" | "support_tickets">("listings");
+  const [activeTab, setActiveTab] = useState<"listings" | "kyc" | "users" | "all_listings" | "payments" | "bookings" | "chat_logs" | "support_tickets" | "settings">("listings");
   const [selectedKyc, setSelectedKyc] = useState<string[]>([]);
   const [batchActionLoading, setBatchActionLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -95,7 +96,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const headers = { "x-user-id": user?.id || user?._id || "" };
-      const [statsRes, listingsRes, kycRes, usersRes, allListingsRes, paymentsRes, bookingsRes, chatLogsRes, supportTicketsRes] = await Promise.all([
+      const [statsRes, listingsRes, kycRes, usersRes, allListingsRes, paymentsRes, bookingsRes, chatLogsRes, supportTicketsRes, settingsRes] = await Promise.all([
         fetch("/api/admin/analytics/overview", { headers }),
         fetch("/api/admin/listings/pending", { headers }),
         fetch("/api/admin/users/verification-requests", { headers }),
@@ -105,6 +106,7 @@ export default function AdminDashboard() {
         fetch("/api/admin/bookings", { headers }),
         fetch("/api/admin/chat-logs", { headers }),
         fetch("/api/support/admin/tickets", { headers }),
+        fetch("/api/admin/settings", { headers }),
       ]);
       const statsData = await statsRes.json();
       const listingsData = await listingsRes.json();
@@ -115,6 +117,7 @@ export default function AdminDashboard() {
       const bookingsData = await bookingsRes.json();
       const chatLogsData = await chatLogsRes.json();
       const supportTicketsData = await supportTicketsRes.json();
+      const settingsData = await settingsRes.json();
 
       setStats(statsData);
       setPendingListings(Array.isArray(listingsData) ? listingsData : []);
@@ -125,6 +128,9 @@ export default function AdminDashboard() {
       setBookings(Array.isArray(bookingsData) ? bookingsData : []);
       setChatLogs(Array.isArray(chatLogsData) ? chatLogsData : []);
       setSupportTickets(Array.isArray(supportTicketsData) ? supportTicketsData : []);
+      if (settingsData.success) {
+        setSystemSettings(settingsData.data);
+      }
     } catch (error) {
       console.error("Failed to fetch admin data", error);
     } finally {
@@ -455,6 +461,12 @@ export default function AdminDashboard() {
               onClick={() => { setActiveTab("support_tickets"); setSearchQuery(""); }}
             >
               Support Tickets
+            </button>
+            <button
+              className={`pb-3 px-2 font-medium text-sm border-b-2 transition-colors whitespace-nowrap ${activeTab === "settings" ? "border-slate-600 text-slate-700" : "border-transparent text-stone-500 hover:text-stone-700"}`}
+              onClick={() => { setActiveTab("settings"); setSearchQuery(""); }}
+            >
+              Settings
             </button>
           </div>
 
@@ -937,7 +949,87 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+        {activeTab === "settings" && systemSettings && (
+          <div className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-stone-100 flex items-center justify-between bg-stone-50/50">
+              <h2 className="text-lg font-bold text-stone-900">System Settings</h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-stone-700 mb-1">
+                  Default Service Fee (%)
+                </label>
+                <input
+                  type="number"
+                  value={systemSettings.defaultServiceFee}
+                  onChange={(e) => setSystemSettings({ ...systemSettings, defaultServiceFee: parseFloat(e.target.value) })}
+                  className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-500/20 focus:border-slate-500"
+                />
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-stone-900">Maintenance Mode</p>
+                  <p className="text-xs text-stone-500">Disable access for non-admin users</p>
+                </div>
+                <button
+                  onClick={() => setSystemSettings({ ...systemSettings, maintenanceMode: !systemSettings.maintenanceMode })}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${systemSettings.maintenanceMode ? 'bg-red-500' : 'bg-stone-200'}`}
+                >
+                  <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${systemSettings.maintenanceMode ? 'translate-x-6' : 'translate-x-1'}`} />
+                </button>
+              </div>
+              <div className="pt-4 border-t border-stone-100">
+                <h3 className="text-sm font-bold text-stone-900 mb-4">Notification Settings</h3>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-stone-700">Email Notifications</p>
+                    <button
+                      onClick={() => setSystemSettings({ ...systemSettings, notificationSettings: { ...systemSettings.notificationSettings, emailEnabled: !systemSettings.notificationSettings.emailEnabled } })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${systemSettings.notificationSettings?.emailEnabled ? 'bg-emerald-500' : 'bg-stone-200'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${systemSettings.notificationSettings?.emailEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-stone-700">SMS Notifications</p>
+                    <button
+                      onClick={() => setSystemSettings({ ...systemSettings, notificationSettings: { ...systemSettings.notificationSettings, smsEnabled: !systemSettings.notificationSettings.smsEnabled } })}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${systemSettings.notificationSettings?.smsEnabled ? 'bg-emerald-500' : 'bg-stone-200'}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${systemSettings.notificationSettings?.smsEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div className="pt-6">
+                <button
+                  onClick={async () => {
+                    try {
+                      const res = await fetch("/api/admin/settings", {
+                        method: "PUT",
+                        headers: {
+                          "Content-Type": "application/json",
+                          "x-user-id": user?.id || user?._id || ""
+                        },
+                        body: JSON.stringify(systemSettings)
+                      });
+                      if (res.ok) alert("Settings updated successfully");
+                      else alert("Failed to update settings");
+                    } catch (e) {
+                      alert("Error updating settings");
+                    }
+                  }}
+                  className="w-full py-2.5 bg-slate-900 text-white rounded-xl font-medium text-sm hover:bg-slate-800 transition-colors"
+                >
+                  Save Settings
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
+

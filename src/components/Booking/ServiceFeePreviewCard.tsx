@@ -25,17 +25,44 @@ export const ServiceFeePreviewCard: React.FC<{ listingId: string }> = ({ listing
   if (!preview) return null;
 
   return (
-    <div className="border border-stone-200 rounded-2xl p-4 bg-white shadow-sm">
-      <h3 className="font-bold text-lg mb-2">💳 Booking Fee Summary</h3>
-      <p>Room Type: {preview.roomTypeLabel}</p>
-      <p>Monthly Rent: Rs {preview.monthlyRent.toLocaleString()} (pay to owner)</p>
-      <div className="bg-emerald-50 p-3 rounded-xl my-3">
-        <p className="font-bold text-emerald-800">LookRooms Service Fee: Rs {preview.serviceFee.toLocaleString()}</p>
-        <p className="text-sm text-emerald-700">✅ Pay only if accepted</p>
+    <div className="border border-stone-200 rounded-2xl p-5 bg-white shadow-sm space-y-4">
+      <div className="flex items-center justify-between">
+        <h3 className="font-bold text-lg text-stone-900">Booking Summary</h3>
+        <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-md uppercase tracking-wider">
+          Platform Fee
+        </span>
       </div>
-      <p className="text-sm text-stone-600">ℹ️ {preview.breakdown.platformFee}</p>
-      <p className="text-sm text-stone-600">{preview.breakdown.rentPayment}</p>
-      <p className="text-sm text-stone-600">🔄 {preview.breakdown.refundPolicy}</p>
+
+      <div className="space-y-2 text-sm">
+        <div className="flex justify-between">
+          <span className="text-stone-500">Property Type</span>
+          <span className="font-semibold text-stone-900 capitalize">{preview.roomTypeLabel}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-stone-500">Monthly Rent</span>
+          <span className="font-semibold text-stone-900">Rs {preview.monthlyRent.toLocaleString()}</span>
+        </div>
+        <p className="text-[10px] text-stone-400 text-right italic">* To be paid directly to landlord</p>
+      </div>
+
+      <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-100">
+        <div className="flex justify-between items-center mb-1">
+          <span className="text-emerald-800 font-bold">Service Fee</span>
+          <span className="text-emerald-800 font-bold text-lg">Rs {preview.serviceFee.toLocaleString()}</span>
+        </div>
+        <p className="text-xs text-emerald-700">One-time platform connection fee</p>
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-stone-100">
+        <div className="flex gap-2 items-start text-xs text-stone-600">
+          <span className="text-emerald-500 mt-0.5">✓</span>
+          <p>{preview.breakdown.refundPolicy}</p>
+        </div>
+        <div className="flex gap-2 items-start text-xs text-stone-600">
+          <span className="text-emerald-500 mt-0.5">✓</span>
+          <p>Secure payment via Khalti/eSewa</p>
+        </div>
+      </div>
     </div>
   );
 };

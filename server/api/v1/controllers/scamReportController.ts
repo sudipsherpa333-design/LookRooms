@@ -19,11 +19,17 @@ export const reportScam = asyncHandler(async (req: Request, res: Response) => {
   });
   await report.save();
 
+  // Reports are now handled by an Admin Review Queue.
+  // Trust score is updated only after admin moderation.
+  
+  // Update booking status to reflect it's under review
   await BookingStatus.findOneAndUpdate({ bookingId }, { currentStatus: 'scam_reported', isFlagged: true });
-  await UserTrustScore.findOneAndUpdate({ userId: reportedUserId }, { $inc: { scamReportsReceived: 1, trustScore: -20 } });
 
-  // Emit socket event
+  // Emit socket event for admin dashboard
   req.app.get('io').emit('newScamReport', { reportId: report._id });
 
-  res.status(201).json({ reportId: report._id, message: 'Report submitted. Admin will review within 24 hours.' });
+  res.status(201).json({ 
+    reportId: report._id, 
+    message: 'Report submitted. Our moderation team will review the evidence and take action within 24 hours.' 
+  });
 });

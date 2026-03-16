@@ -1,8 +1,15 @@
-import React, { useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import React, { useEffect, useRef } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap, FeatureGroup } from "react-leaflet";
 import L from "leaflet";
+
+// Fix for leaflet-draw
+if (typeof window !== "undefined") {
+  (window as any).L = L;
+}
+
 import { Link } from "react-router-dom";
 import { MapPin, ShieldCheck } from "lucide-react";
+import "leaflet-draw/dist/leaflet.draw.css";
 
 // Fix for default marker icons in Leaflet with React
 // @ts-ignore
@@ -30,6 +37,7 @@ const RecenterMap = ({ center }: { center: [number, number] }) => {
 interface ListingMapProps {
   listings: any[];
   center?: [number, number];
+  onSearchArea?: (polygon: [number, number][] | null) => void;
 }
 
 const createPriceMarker = (price: number, isOccupied: boolean) => {
@@ -43,7 +51,121 @@ const createPriceMarker = (price: number, isOccupied: boolean) => {
   });
 };
 
-export default function ListingMap({ listings, center = [27.7172, 85.324] }: ListingMapProps) {
+const DrawControl = ({ onCreated, onDeleted, onEdited, featureGroupRef }: any) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+    
+    // Ensure L is on window for leaflet-draw
+    if (typeof window !== "undefined") {
+      (window as any).L = L;
+    }
+
+    let drawControl: any;
+    let featureGroup: L.FeatureGroup;
+
+    import("leaflet-draw").then(() => {
+      featureGroup = new L.FeatureGroup();
+      map.addLayer(featureGroup);
+      if (featureGroupRef) {
+        featureGroupRef.current = featureGroup;
+      }
+
+      drawControl = new (L.Control as any).Draw({
+        position: 'topright',
+        edit: {
+          featureGroup: featureGroup,
+          remove: true
+        },
+        draw: {
+          polygon: true,
+          rectangle: true,
+          circle: false,
+          circlemarker: false,
+          marker: false,
+          polyline: false,
+        }
+      });
+
+      map.addControl(drawControl);
+
+      const handleCreated = (e: any) => {
+        featureGroup.addLayer(e.layer);
+        if (onCreated) onCreated(e);
+      };
+
+      const handleDeleted = (e: any) => {
+        if (onDeleted) onDeleted(e);
+      };
+
+      const handleEdited = (e: any) => {
+        if (onEdited) onEdited(e);
+      };
+
+      map.on((L as any).Draw.Event.CREATED, handleCreated);
+      map.on((L as any).Draw.Event.DELETED, handleDeleted);
+      map.on((L as any).Draw.Event.EDITED, handleEdited);
+    });
+
+    return () => {
+      if (drawControl) {
+        map.removeControl(drawControl);
+      }
+      if (featureGroup) {
+        map.removeLayer(featureGroup);
+      }
+      // We can't easily remove listeners if they were added asynchronously and we don't have references here,
+      // but since map is unmounting it's usually fine.
+    };
+  }, [map, onCreated, onDeleted, onEdited, featureGroupRef]);
+
+  return null;
+};
+
+export default function ListingMap({ listings, center = [27.7172, 85.324], onSearchArea }: ListingMapProps) {
+  const featureGroupRef = useRef<any>(null);
+
+  const _onCreated = (e: any) => {
+    const { layerType, layer } = e;
+    if (layerType === 'polygon' || layerType === 'rectangle') {
+      const latlngs = layer.getLatLngs()[0];
+      const polygon = latlngs.map((latlng: any) => [latlng.lat, latlng.lng]);
+      if (onSearchArea) {
+        onSearchArea(polygon);
+      }
+      
+      // Clear previous layers to only keep one search area
+      if (featureGroupRef.current) {
+        const layers = featureGroupRef.current.getLayers();
+        layers.forEach((l: any) => {
+          if (l !== layer) {
+            featureGroupRef.current.removeLayer(l);
+          }
+        });
+      }
+    }
+  };
+
+  const _onDeleted = () => {
+    if (onSearchArea) {
+      onSearchArea(null);
+    }
+  };
+
+  const _onEdited = (e: any) => {
+    const layers = e.layers;
+    layers.eachLayer((layer: any) => {
+      if (layer instanceof L.Polygon || layer instanceof L.Rectangle) {
+        const latlngs: any = layer.getLatLngs()[0];
+        const polygon = latlngs.map((latlng: any) => [latlng.lat, latlng.lng]);
+        if (onSearchArea) {
+          onSearchArea(polygon);
+        }
+      }
+    });
+  };
+
   return (
     <div className="w-full h-full rounded-[2.5rem] overflow-hidden border border-stone-100 shadow-2xl z-0">
       <MapContainer
@@ -57,6 +179,16 @@ export default function ListingMap({ listings, center = [27.7172, 85.324] }: Lis
           url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         />
         <RecenterMap center={center} />
+        
+        {onSearchArea && (
+          <DrawControl
+            onCreated={_onCreated}
+            onDeleted={_onDeleted}
+            onEdited={_onEdited}
+            featureGroupRef={featureGroupRef}
+          />
+        )}
+
         {listings.map((listing) => {
           const lat = listing.location?.coordinates?.lat || 27.7172 + (Math.random() - 0.5) * 0.05;
           const lng = listing.location?.coordinates?.lng || 85.324 + (Math.random() - 0.5) * 0.05;

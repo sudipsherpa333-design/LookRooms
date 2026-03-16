@@ -1,5 +1,7 @@
 import { Request, Response } from 'express';
-import { Payment, Listing, User, FeeRule, Notification } from '../../../models/index.js';
+import { Listing, User, Notification } from '../../../models/index.js';
+import { ServiceFeePayment } from '../../../models/ServiceFeePayment.js';
+import { BookingRequest } from '../../../models/BookingRequest.js';
 import { initiateKhaltiPayment, verifyKhaltiPayment } from '../../../utils/khaltiHelper.js';
 import { generateEsewaSignature, verifyEsewaSignature } from '../../../utils/esewaHelper.js';
 import { calculateServiceFee } from '../../../utils/feeCalculator.js';
@@ -16,44 +18,46 @@ const ESEWA_URL = process.env.NODE_ENV === 'production'
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
 
 export const initiatePayment = async (req: any, res: Response) => {
-  const { listingId, paymentMethod, useSavedToken } = req.body;
+  const { feePaymentId, paymentMethod } = req.body;
   const userId = req.user.userId;
 
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const listing = await Listing.findById(listingId).session(session);
+    const payment = await ServiceFeePayment.findById(feePaymentId).session(session);
+    if (!payment) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: 'Payment record not found' });
+    }
+
+    if (payment.tenantId.toString() !== userId) {
+      await session.abortTransaction();
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    if (payment.paymentStatus === 'paid') {
+      await session.abortTransaction();
+      return res.status(400).json({ error: 'Payment already completed' });
+    }
+
+    const listing = await Listing.findById(payment.listingId).session(session);
     if (!listing) {
       await session.abortTransaction();
       return res.status(404).json({ error: 'Listing not found' });
     }
 
-    if (listing.lockStatus !== 'available') {
-      await session.abortTransaction();
-      return res.status(400).json({ error: 'Listing is currently locked or booked' });
-    }
-
-    const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);
-    const totalAmount = serviceFee; // Only charge service fee
-
-    // Lock listing
+    // Refresh lock
     listing.lockStatus = 'locked';
     listing.lockedBy = userId;
     listing.lockExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
     await listing.save({ session });
 
-    const payment = new Payment({
-      userId,
-      listingId,
-      amount: 0, // Rent is 0 for now
-      serviceFee,
-      totalAmount,
-      paymentMethod,
-      status: 'pending',
-    });
+    payment.paymentMethod = paymentMethod;
+    payment.paymentStatus = 'processing';
 
     let gatewayData: any = {};
+    const totalAmount = payment.serviceFee;
 
     if (paymentMethod === 'khalti') {
       const user = await User.findById(userId).session(session);
@@ -62,7 +66,7 @@ export const initiatePayment = async (req: any, res: Response) => {
         website_url: APP_URL,
         amount: totalAmount * 100, // paisa
         purchase_order_id: payment._id.toString(),
-        purchase_order_name: `Room Booking - ${listing.title}`,
+        purchase_order_name: `Room Booking Fee - ${listing.title}`,
         customer_info: {
           name: user?.name || 'Guest',
           email: user?.email || 'guest@example.com',
@@ -80,12 +84,12 @@ export const initiatePayment = async (req: any, res: Response) => {
       gatewayData = {
         url: ESEWA_URL,
         formData: {
-          amount: 0, // Rent is 0
+          amount: totalAmount,
           tax_amount: 0,
           total_amount: totalAmount,
           transaction_uuid: payment._id.toString(),
           product_code: ESEWA_SCD,
-          product_service_charge: serviceFee,
+          product_service_charge: 0,
           product_delivery_charge: 0,
           success_url: `${APP_URL}/payment/verify?gateway=esewa`,
           failure_url: `${APP_URL}/payment-status?status=failed`,
@@ -114,7 +118,7 @@ export const initiatePayment = async (req: any, res: Response) => {
 };
 
 export const verifyPayment = async (req: any, res: Response) => {
-  const { pidx, data, gateway } = req.body; // data is base64 for esewa v2
+  const { pidx, data, gateway } = req.body;
   const userId = req.user.userId;
 
   const session = await mongoose.startSession();
@@ -124,7 +128,6 @@ export const verifyPayment = async (req: any, res: Response) => {
     let paymentId = '';
     let success = false;
     let transactionId = '';
-    let refId = '';
 
     if (gateway === 'khalti') {
       const verification = await verifyKhaltiPayment(pidx);
@@ -134,68 +137,72 @@ export const verifyPayment = async (req: any, res: Response) => {
         success = true;
       }
     } else if (gateway === 'esewa') {
-      // eSewa v2 sends data in base64
       const decodedData = JSON.parse(Buffer.from(data, 'base64').toString());
       paymentId = decodedData.transaction_uuid;
-      refId = decodedData.transaction_code;
+      transactionId = decodedData.transaction_code;
       
       const { signed_field_names, signature } = decodedData;
-      
       if (signed_field_names && signature) {
         const fields = signed_field_names.split(',');
         const dataString = fields.map((field: string) => `${field}=${decodedData[field]}`).join(',');
-        
         const isValidSignature = verifyEsewaSignature(dataString, signature, ESEWA_SECRET);
-        
         if (isValidSignature && decodedData.status === 'COMPLETE') {
           success = true;
-        } else {
-          console.error('eSewa signature verification failed or status not COMPLETE');
         }
       }
     }
 
-    const payment = await Payment.findById(paymentId).session(session);
+    const payment = await ServiceFeePayment.findById(paymentId).session(session);
     if (!payment) {
       await session.abortTransaction();
       return res.status(404).json({ error: 'Payment record not found' });
     }
 
+    const booking = await BookingRequest.findById(payment.bookingRequestId).session(session);
     const listing = await Listing.findById(payment.listingId).session(session);
 
     if (success) {
-      payment.status = 'success';
-      payment.transactionId = transactionId || refId;
-      payment.refId = refId;
+      payment.paymentStatus = 'paid';
+      payment.transactionId = transactionId;
+      payment.paidAt = new Date();
       await payment.save({ session });
 
+      if (booking) {
+        booking.status = 'fee_paid';
+        booking.landlordDeadline = new Date(Date.now() + 48 * 60 * 60 * 1000); // 48 hours for landlord
+        await booking.save({ session });
+      }
+
       if (listing) {
-        listing.lockStatus = 'booked';
+        listing.lockStatus = 'locked'; // Keep locked while landlord reviews
         await listing.save({ session });
       }
 
-      // Create notification
+      // Notification
       const notification = new Notification({
-        userId: payment.userId,
+        userId: payment.tenantId,
         type: 'payment_success',
-        message: `Payment of Rs. ${payment.totalAmount} for ${listing?.title} was successful.`,
-        link: `/listing/${listing?._id}`
+        message: `Service fee of Rs. ${payment.serviceFee} for ${listing?.title} was successful. Request sent to landlord.`,
+        link: `/applications`
       });
       await notification.save({ session });
 
       await session.commitTransaction();
 
-      emitToUser(payment.userId.toString(), 'paymentSuccess', { paymentId: payment._id });
+      emitToUser(payment.tenantId.toString(), 'paymentSuccess', { paymentId: payment._id });
       
-      const user = await User.findById(payment.userId);
+      const user = await User.findById(payment.tenantId);
       if (user?.email) {
-        await sendEmail(user.email, 'Booking Successful', `<h1>Payment Successful</h1><p>Your booking for ${listing?.title} is confirmed.</p>`);
+        await sendEmail(user.email, 'Service Fee Payment Successful', `
+          <h1>Payment Successful</h1>
+          <p>Your service fee of Rs ${payment.serviceFee} for ${listing?.title} has been received.</p>
+          <p><strong>Note:</strong> This is a platform service fee. Monthly rent and security deposit must be paid directly to the landlord after they accept your request.</p>
+        `);
       }
 
       res.json({ success: true, transactionId: payment.transactionId });
     } else {
-      payment.status = 'failed';
-      payment.retryExpiry = new Date(Date.now() + 10 * 60 * 1000);
+      payment.paymentStatus = 'failed';
       await payment.save({ session });
 
       if (listing) {
@@ -205,7 +212,7 @@ export const verifyPayment = async (req: any, res: Response) => {
 
       await session.commitTransaction();
 
-      emitToUser(payment.userId.toString(), 'paymentFailed', { paymentId: payment._id });
+      emitToUser(payment.tenantId.toString(), 'paymentFailed', { paymentId: payment._id });
       res.json({ success: false, message: 'Payment verification failed' });
     }
   } catch (error) {
@@ -222,10 +229,10 @@ export const retryPayment = async (req: any, res: Response) => {
   const userId = req.user.userId;
 
   try {
-    const payment = await Payment.findById(paymentId);
+    const payment = await ServiceFeePayment.findById(paymentId);
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
 
-    if (payment.status !== 'failed') {
+    if (payment.paymentStatus !== 'failed') {
       return res.status(400).json({ error: 'Only failed payments can be retried' });
     }
 
@@ -263,11 +270,18 @@ export const getFeePreview = async (req: Request, res: Response) => {
 
     const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);
     res.json({
-      listingPrice: listing.price,
-      serviceFee,
-      totalAmount: listing.price + serviceFee,
-      feeLabel: 'Service Fee',
-      note: 'Fee charged only if booking accepted'
+      roomType: listing.propertyType || listing.roomType,
+      roomTypeLabel: listing.propertyType || listing.roomType,
+      monthlyRent: listing.price,
+      depositAmount: listing.securityDeposit || 0,
+      serviceFee: serviceFee,
+      feeLabel: 'Platform connection fee',
+      breakdown: {
+        platformFee: `Rs ${serviceFee.toLocaleString()} (one-time, paid to LookRooms)`,
+        rentPayment: `Rs ${listing.price.toLocaleString()}/month paid directly to landlord`,
+        whenCharged: "Pay now to send your booking request",
+        refundPolicy: "Full refund if landlord rejects or no response in 48hrs"
+      }
     });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch fee preview' });
@@ -279,16 +293,16 @@ export const getPaymentHistory = async (req: any, res: Response) => {
   const { page = 1, limit = 10, status } = req.query;
 
   try {
-    const query: any = { userId };
-    if (status) query.status = status;
+    const query: any = { tenantId: userId };
+    if (status) query.paymentStatus = status;
 
-    const payments = await Payment.find(query)
+    const payments = await ServiceFeePayment.find(query)
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit))
       .populate('listingId', 'title images');
 
-    const total = await Payment.countDocuments(query);
+    const total = await ServiceFeePayment.countDocuments(query);
 
     res.json({
       payments,

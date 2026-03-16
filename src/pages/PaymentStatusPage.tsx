@@ -75,8 +75,8 @@ export default function PaymentStatusPage() {
               <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle2 className="w-10 h-10 text-emerald-600" />
               </div>
-              <h2 className="text-3xl font-black text-stone-900 uppercase tracking-tighter mb-2">Booking Confirmed!</h2>
-              <p className="text-stone-500 text-sm font-medium mb-8">Your payment was processed successfully.</p>
+              <h2 className="text-3xl font-black text-stone-900 uppercase tracking-tighter mb-2">Request Sent!</h2>
+              <p className="text-stone-500 text-sm font-medium mb-8">Your service fee was processed successfully. The landlord has 48 hours to respond.</p>
               
               <div className="bg-stone-50 rounded-2xl p-4 mb-8 text-left space-y-3">
                 <div className="flex justify-between text-xs">
@@ -84,8 +84,12 @@ export default function PaymentStatusPage() {
                   <span className="text-stone-900 font-mono font-bold">{paymentData?.transactionId}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-stone-400 font-bold uppercase">Amount Paid</span>
-                  <span className="text-emerald-600 font-black">Rs. {paymentData?.amount?.toLocaleString()}</span>
+                  <span className="text-stone-400 font-bold uppercase">Service Fee Paid</span>
+                  <span className="text-emerald-600 font-black">Rs. {paymentData?.serviceFee?.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span className="text-stone-400 font-bold uppercase">Monthly Rent</span>
+                  <span className="text-stone-900 font-bold">Rs. {paymentData?.monthlyRent?.toLocaleString()} (Pay to Landlord)</span>
                 </div>
               </div>
 
@@ -94,8 +98,8 @@ export default function PaymentStatusPage() {
                   <Download className="w-4 h-4" />
                   Receipt
                 </button>
-                <Link to="/bookings" className="flex items-center justify-center gap-2 bg-stone-900 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/20">
-                  My Bookings
+                <Link to="/applications" className="flex items-center justify-center gap-2 bg-stone-900 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-stone-800 transition-all shadow-lg shadow-stone-900/20">
+                  My Applications
                 </Link>
               </div>
             </motion.div>

@@ -51,10 +51,16 @@ export default function Layout() {
       roles: ["homeowner"],
     },
     {
+      to: "/agent/dashboard",
+      icon: LayoutGrid,
+      label: "Agent Portal",
+      roles: ["agent"],
+    },
+    {
       to: "/profile",
       icon: User,
       label: "Profile",
-      roles: ["user", "homeowner"],
+      roles: ["user", "homeowner", "agent"],
     },
     { to: "/admin", icon: ShieldAlert, label: "Admin", roles: ["admin"] },
     { to: "/support", icon: LifeBuoy, label: "Support", roles: ["user", "homeowner", "admin", "guest"] },

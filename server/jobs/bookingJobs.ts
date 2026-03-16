@@ -29,7 +29,18 @@ export const setupCronJobs = () => {
     for (const req of expired) {
       req.status = 'expired';
       await req.save();
-      // Trigger full refund logic here
+      
+      // Trigger full refund logic
+      const payment = await ServiceFeePayment.findOne({ bookingRequestId: req._id });
+      if (payment && payment.paymentStatus === 'paid') {
+        payment.refundStatus = 'initiated';
+        payment.refundReason = 'landlord_timeout';
+        await payment.save();
+        // In a real app, you'd call the gateway's refund API here
+        console.log(`[REFUND] Initiated for payment ${payment._id} due to landlord timeout`);
+      }
+
+      await Listing.findByIdAndUpdate(req.listingId, { lockStatus: 'available' });
       emitToUser(req.tenantId.toString(), 'bookingExpired', { message: "Landlord didn't respond. Full refund initiated." });
     }
   });

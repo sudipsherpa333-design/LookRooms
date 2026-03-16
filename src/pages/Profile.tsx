@@ -350,6 +350,26 @@ export default function Profile() {
                   )}
                 </div>
               </div>
+
+              {/* Agent Registration */}
+              {user.role !== 'agent' && (
+                <div className="pt-6 border-t border-stone-100">
+                  <div className="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-indigo-900">Are you a professional room broker?</h3>
+                      <p className="text-sm text-indigo-700 mt-1">
+                        Join LookRooms as an Agent to manage multiple properties, set your own fees, and get a dedicated CRM dashboard.
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => window.location.href = '/agent/register'}
+                      className="whitespace-nowrap px-6 py-2 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                      Become an Agent
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

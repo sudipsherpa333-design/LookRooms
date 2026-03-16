@@ -9,9 +9,23 @@ import Saved from "./pages/Saved";
 import Applications from "./pages/Applications";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import AdminDashboard from "./pages/AdminDashboard";
+import AgentLayout from "./components/AgentLayout";
+import AgentDashboard from "./pages/agent/AgentDashboard";
+import AgentListings from "./pages/agent/AgentListings";
+import AgentCRM from "./pages/agent/AgentCRM";
+import AgentBookings from "./pages/agent/AgentBookings";
+import AgentFees from "./pages/agent/AgentFees";
+import AgentAnalytics from "./pages/agent/AgentAnalytics";
+import AgentProfile from "./pages/agent/AgentProfile";
+import AgentReviews from "./pages/agent/AgentReviews";
+import AgentSubscription from "./pages/agent/AgentSubscription";
+import AgentSettings from "./pages/agent/AgentSettings";
+import AgentRegistration from "./pages/agent/AgentRegistration";
+import AgentPublicProfile from "./pages/agent/AgentPublicProfile";
 import Chat from "./pages/Chat";
 import Login from "./features/auth/pages/Login";
 import Register from "./features/auth/pages/Register";
+import ForgotPassword from "./features/auth/pages/ForgotPassword";
 import Profile from "./pages/Profile";
 import Support from "./pages/Support";
 import MaintenanceRequests from "./pages/MaintenanceRequests";
@@ -33,6 +47,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/" element={<Layout />}>
           <Route index element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Home /></motion.div>} />
           <Route path="listing/:id" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ListingDetails /></motion.div>} />
@@ -50,6 +65,22 @@ function AnimatedRoutes() {
           <Route path="tenant-management" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><TenantManagement /></motion.div>} />
           <Route path="my-maintenance" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><MyMaintenance /></motion.div>} />
           <Route path="admin" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AdminDashboard /></motion.div>} />
+          <Route path="agent/register" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentRegistration /></motion.div>} />
+          <Route path="agent/:slug" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentPublicProfile /></motion.div>} />
+        </Route>
+        
+        {/* Agent Routes */}
+        <Route path="/agent" element={<AgentLayout />}>
+          <Route path="dashboard" element={<AgentDashboard />} />
+          <Route path="listings" element={<AgentListings />} />
+          <Route path="crm" element={<AgentCRM />} />
+          <Route path="bookings" element={<AgentBookings />} />
+          <Route path="fees" element={<AgentFees />} />
+          <Route path="analytics" element={<AgentAnalytics />} />
+          <Route path="profile" element={<AgentProfile />} />
+          <Route path="reviews" element={<AgentReviews />} />
+          <Route path="subscription" element={<AgentSubscription />} />
+          <Route path="settings" element={<AgentSettings />} />
         </Route>
       </Routes>
     </AnimatePresence>

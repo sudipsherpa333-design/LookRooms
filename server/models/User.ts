@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["user", "homeowner", "admin"],
+      enum: ["user", "homeowner", "admin", "agent"],
       default: "user",
       index: true,
     },
@@ -227,8 +227,10 @@ const userSchema = new mongoose.Schema(
       set: (val: string) => val ? encrypt(val) : val,
       get: (val: string) => val ? decrypt(val) : val
     },
-    resetToken: String,
-    resetTokenExpiry: Date,
+    passwordResetToken: String,
+    passwordResetTokenExpiry: Date,
+    passwordHistory: { type: [String], default: [] },
+    tokenVersion: { type: Number, default: 0 },
     recoveryCode: String,
     loginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date },

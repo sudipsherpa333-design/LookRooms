@@ -1,6 +1,10 @@
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'your-32-character-secret-key-123'; // Must be 32 bytes
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 32) {
+  throw new Error("CRITICAL: ENCRYPTION_KEY must be a 32-character string in environment variables.");
+}
 const IV_LENGTH = 16; // For AES
 
 export const encrypt = (text: string): string => {

@@ -8,8 +8,11 @@ export interface IServiceFeePayment extends Document {
   roomType: string;
   roomTypeLabel: string;
   monthlyRent: number;
+  depositAmount: number;
+  rentPaidTo: string;
   serviceFee: number;
   feeLabel: string;
+  feeDescription: string;
   paymentMethod: 'esewa' | 'khalti';
   paymentStatus: 'pending' | 'processing' | 'paid' | 'failed' | 'refunded' | 'refund_pending';
   transactionId: string;
@@ -21,7 +24,7 @@ export interface IServiceFeePayment extends Document {
   retryCount: number;
   retryExpiry: Date;
   retryHistory: any[];
-  refundStatus: 'none' | 'pending' | 'processed' | 'failed';
+  refundStatus: 'none' | 'initiated' | 'processed' | 'failed';
   refundReason: string;
   refundAmount: number;
   refundedAt: Date;
@@ -41,8 +44,11 @@ const ServiceFeePaymentSchema = new Schema({
   roomType: { type: String },
   roomTypeLabel: { type: String },
   monthlyRent: { type: Number },
+  depositAmount: { type: Number },
+  rentPaidTo: { type: String, default: 'landlord_directly' },
   serviceFee: { type: Number, required: true },
-  feeLabel: { type: String },
+  feeLabel: { type: String, default: 'Platform connection fee' },
+  feeDescription: { type: String, default: 'One-time fee for connecting you with your landlord via LookRooms platform' },
   paymentMethod: { type: String, enum: ['esewa', 'khalti'] },
   paymentStatus: {
     type: String,
@@ -65,7 +71,7 @@ const ServiceFeePaymentSchema = new Schema({
   }],
   refundStatus: {
     type: String,
-    enum: ['none', 'pending', 'processed', 'failed'],
+    enum: ['none', 'initiated', 'processed', 'failed'],
     default: 'none'
   },
   refundReason: { type: String },

@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema(
     password: { type: String, required: true },
     role: {
       type: String,
-      enum: ["user", "homeowner", "admin"],
+      enum: ["user", "homeowner", "admin", "agent"],
       default: "user",
       index: true,
     },
@@ -589,6 +589,13 @@ const listingSchema = new mongoose.Schema(
     sunExposure: String,
     genderPreference: String,
     foodPreference: String,
+    listedBy: { type: String, enum: ['owner', 'agent'], default: 'owner' },
+    agentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Agent' },
+    actualOwnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    agentServiceFee: { type: Number },
+    agentFeeLabel: { type: String },
+    agentFeeNote: { type: String },
+    isAgentListing: { type: Boolean, default: false },
   },
   {
     toJSON: { virtuals: true },
@@ -939,6 +946,11 @@ const notificationSchema = new mongoose.Schema({
 });
 
 export const Notification = mongoose.model("Notification", notificationSchema);
+
+export * from "./models/agent/Agent.js";
+export * from "./models/agent/AgentLead.js";
+export * from "./models/agent/AgentReview.js";
+
 
 const reviewSchema = new mongoose.Schema({
   bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },

@@ -12,10 +12,18 @@ import { rateLimit } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import redis from "./utils/redis.js";
 import apiV1 from "./api/v1/index.js";
+import { errorHandler } from "./middleware/errorHandler.js";
+import logger from "./utils/logger.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
+
+// Custom Winston Request Logger
+app.use((req, res, next) => {
+  logger.http(`${req.method} ${req.url} - ${req.ip}`);
+  next();
+});
 
 // Security Middlewares
 app.disable('x-powered-by'); // Hide Express
@@ -63,17 +71,6 @@ if (process.env.NODE_ENV === "production") {
 }
 
 // Global Error Handler
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error(err.stack);
-  const status = err.status || 500;
-  const message = err.message || 'Internal Server Error';
-  res.status(status).json({
-    error: {
-      message,
-      status,
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+app.use(errorHandler);
 
 export default app;

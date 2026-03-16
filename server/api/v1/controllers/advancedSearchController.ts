@@ -27,7 +27,8 @@ export const advancedSearch = async (req: Request, res: Response) => {
       radius = 5, // km
       sort = 'relevance',
       page = 1,
-      limit = 20
+      limit = 20,
+      searchPolygon
     } = req.query;
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -48,7 +49,7 @@ export const advancedSearch = async (req: Request, res: Response) => {
     }
 
     // 2. Geo-spatial search
-    if (lat && lng) {
+    if (lat && lng && !searchPolygon) {
       pipeline.push({
         $geoNear: {
           near: { type: "Point", coordinates: [Number(lng), Number(lat)] },
@@ -62,6 +63,32 @@ export const advancedSearch = async (req: Request, res: Response) => {
 
     // 3. Filters
     const matchStage: any = { status: 'active' };
+    
+    if (searchPolygon) {
+      try {
+        const polygonCoords = JSON.parse(searchPolygon as string);
+        // MongoDB expects [lng, lat]
+        const mongoPolygon = polygonCoords.map((coord: [number, number]) => [coord[1], coord[0]]);
+        // Close the polygon if not closed
+        if (mongoPolygon.length > 0 && (mongoPolygon[0][0] !== mongoPolygon[mongoPolygon.length - 1][0] || mongoPolygon[0][1] !== mongoPolygon[mongoPolygon.length - 1][1])) {
+          mongoPolygon.push(mongoPolygon[0]);
+        }
+        
+        if (mongoPolygon.length >= 4) {
+          matchStage['location.coordinates'] = {
+            $geoWithin: {
+              $geometry: {
+                type: "Polygon",
+                coordinates: [mongoPolygon]
+              }
+            }
+          };
+        }
+      } catch (e) {
+        console.error("Invalid searchPolygon format", e);
+      }
+    }
+    
     if (city) matchStage['location.city'] = city;
     if (roomType) matchStage.propertyType = roomType;
     if (minPrice || maxPrice) {

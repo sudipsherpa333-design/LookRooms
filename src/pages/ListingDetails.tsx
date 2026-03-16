@@ -109,9 +109,16 @@ export default function ListingDetails() {
       navigate("/login");
       return;
     }
+
+    if (!moveInDate) {
+      alert("Please select a move-in date first.");
+      return;
+    }
+
     setInitiatingPayment(true);
     try {
-      const res = await fetch("/api/payment/initiate", {
+      // 1. Create Booking Request first (locks listing and gets feePaymentId)
+      const bookingRes = await fetch("/api/booking-requests", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -119,6 +126,30 @@ export default function ListingDetails() {
         },
         body: JSON.stringify({
           listingId: id,
+          moveInDate,
+          stayDuration: "6 months", // Default or from state
+          occupants: 1, // Default or from state
+          idempotencyKey: `book_${id}_${user.id || user._id}_${Date.now()}`,
+        }),
+      });
+
+      const bookingData = await bookingRes.json();
+      if (!bookingRes.ok) {
+        alert(bookingData.error || "Failed to create booking request");
+        return;
+      }
+
+      const { feePaymentId } = bookingData;
+
+      // 2. Initiate Payment with the feePaymentId
+      const res = await fetch("/api/payment/initiate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: JSON.stringify({
+          feePaymentId,
           paymentMethod: gateway,
         }),
       });
@@ -149,6 +180,7 @@ export default function ListingDetails() {
       }
     } catch (error) {
       console.error("Payment initiation failed:", error);
+      alert("Something went wrong. Please try again.");
     } finally {
       setInitiatingPayment(false);
     }
@@ -220,7 +252,35 @@ export default function ListingDetails() {
   };
 
   if (loading) {
-    return <div className="animate-pulse h-96 bg-stone-100 rounded-3xl"></div>;
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 pb-20 p-4 md:p-8 animate-pulse">
+        <div className="flex justify-between items-center">
+          <div className="w-24 h-8 bg-stone-200 rounded-full"></div>
+          <div className="w-24 h-8 bg-stone-200 rounded-full"></div>
+        </div>
+        <div className="h-[300px] md:h-[500px] bg-stone-200 rounded-3xl"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="md:col-span-2 space-y-6">
+            <div className="space-y-4">
+              <div className="h-10 bg-stone-200 rounded w-3/4"></div>
+              <div className="h-6 bg-stone-200 rounded w-1/2"></div>
+            </div>
+            <div className="flex gap-4">
+              <div className="w-24 h-10 bg-stone-200 rounded-xl"></div>
+              <div className="w-24 h-10 bg-stone-200 rounded-xl"></div>
+              <div className="w-24 h-10 bg-stone-200 rounded-xl"></div>
+            </div>
+            <div className="space-y-4">
+              <div className="h-6 bg-stone-200 rounded w-1/4"></div>
+              <div className="h-24 bg-stone-200 rounded w-full"></div>
+            </div>
+          </div>
+          <div className="md:col-span-1">
+            <div className="h-64 bg-stone-200 rounded-3xl"></div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!listing) {
@@ -565,7 +625,10 @@ export default function ListingDetails() {
                     Locked for Payment
                   </>
                 ) : initiatingPayment ? (
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Processing...
+                  </>
                 ) : (
                   <>
                     <CreditCard className="w-5 h-5" />
@@ -602,10 +665,13 @@ export default function ListingDetails() {
                 <button
                   onClick={handleInAppChat}
                   disabled={messaging}
-                  className="w-full font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 bg-stone-900 text-white hover:bg-stone-800 shadow-lg shadow-stone-900/20"
+                  className="w-full font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 bg-stone-900 text-white hover:bg-stone-800 shadow-lg shadow-stone-900/20 disabled:opacity-50"
                 >
                   {messaging ? (
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    <>
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Starting Chat...
+                    </>
                   ) : (
                     <>
                       <MessageSquare className="w-5 h-5" />

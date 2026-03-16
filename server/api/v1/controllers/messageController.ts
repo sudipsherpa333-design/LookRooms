@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
 import { Message, Conversation } from "../../../models/index.js";
 import { scanFile } from "../../../middleware/uploadMiddleware.js";
+import { v2 as cloudinary } from "cloudinary";
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
 export const uploadFile = async (req: Request, res: Response) => {
   try {
@@ -9,11 +16,18 @@ export const uploadFile = async (req: Request, res: Response) => {
     const isClean = await scanFile(req.file);
     if (!isClean) return res.status(400).json({ error: "File contains a virus" });
 
-    // In a real app, upload to S3 or Cloudinary here
-    const fileUrl = `/uploads/${req.file.originalname}`; // Mocked URL
+    // Upload to Cloudinary
+    const b64 = Buffer.from(req.file.buffer).toString("base64");
+    const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+    
+    const result = await cloudinary.uploader.upload(dataURI, {
+      resource_type: "auto",
+      folder: "lookrooms/messages",
+    });
 
-    res.json({ fileUrl, fileName: req.file.originalname, fileSize: req.file.size });
+    res.json({ fileUrl: result.secure_url, fileName: req.file.originalname, fileSize: req.file.size });
   } catch (error) {
+    console.error("Cloudinary upload error:", error);
     res.status(500).json({ error: "Failed to upload file" });
   }
 };

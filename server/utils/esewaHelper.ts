@@ -7,5 +7,13 @@ export const generateEsewaSignature = (totalAmount: number, transactionUuid: str
 
 export const verifyEsewaSignature = (data: string, signature: string, secretKey: string) => {
   const expectedSignature = crypto.createHmac('sha256', secretKey).update(data).digest('base64');
-  return expectedSignature === signature;
+  
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (e) {
+    return false;
+  }
 };

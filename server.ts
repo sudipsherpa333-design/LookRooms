@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
@@ -11,9 +12,23 @@ import jwt from "jsonwebtoken";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 
+// Handle Uncaught Exceptions
+process.on("uncaughtException", (err) => {
+  console.error("UNCAUGHT EXCEPTION! 💥 Shutting down...");
+  console.error(err.name, err.message, err.stack);
+  process.exit(1);
+});
+
 const PORT = process.env.PORT || 3000;
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://sudipsherpa333_db_user:hiMLJK6biQK32SMv@cluster0.jjwwgox.mongodb.net/?appName=Cluster0";
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key-krf";
+const MONGODB_URI = process.env.MONGODB_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!MONGODB_URI || !JWT_SECRET) {
+  console.error("CRITICAL: MONGODB_URI and JWT_SECRET must be set in environment variables.");
+  process.exit(1);
+}
+
+let httpServer: ReturnType<typeof createServer>;
 
 async function startServer() {
   // Vite middleware for development
@@ -25,7 +40,7 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  const httpServer = createServer(app);
+  httpServer = createServer(app);
   const io = new Server(httpServer, {
     cors: {
       origin: "*",
@@ -120,3 +135,16 @@ async function startServer() {
 }
 
 startServer();
+
+// Handle Unhandled Promise Rejections
+process.on("unhandledRejection", (err: Error) => {
+  console.error("UNHANDLED REJECTION! 💥 Shutting down gracefully...");
+  console.error(err.name, err.message, err.stack);
+  if (httpServer) {
+    httpServer.close(() => {
+      process.exit(1);
+    });
+  } else {
+    process.exit(1);
+  }
+});

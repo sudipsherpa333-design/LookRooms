@@ -14,5 +14,10 @@ export const smsService = {
     });
     
     return { success: true, messageId: response.data.message_id };
+  },
+
+  async sendPasswordResetOTPSMS(phone: string, otp: string) {
+    const text = `LookRooms: Your password reset OTP is ${otp}. Valid for 10 minutes. Do NOT share this code.`;
+    return this.sendSMS({ to: phone, text });
   }
 };
