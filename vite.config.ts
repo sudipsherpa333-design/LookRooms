@@ -16,21 +16,13 @@ export default defineConfig(({ mode }) => {
       },
     },
     build: {
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {
-                return 'vendor-react';
-              }
-              if (id.includes('leaflet') || id.includes('react-leaflet')) {
-                return 'vendor-leaflet';
-              }
-              if (id.includes('framer-motion')) {
-                return 'vendor-motion';
-              }
-              return 'vendor';
-            }
+          manualChunks: {
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-leaflet': ['leaflet', 'react-leaflet'],
+            'vendor-motion': ['framer-motion', 'motion']
           }
         }
       }
