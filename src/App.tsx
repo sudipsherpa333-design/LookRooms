@@ -24,6 +24,7 @@ import AgentRegistration from "./pages/agent/AgentRegistration";
 import AgentPublicProfile from "./pages/agent/AgentPublicProfile";
 import Chat from "./pages/Chat";
 import Login from "./features/auth/pages/Login";
+import AgentLogin from "./features/auth/pages/AgentLogin";
 import Register from "./features/auth/pages/Register";
 import ForgotPassword from "./features/auth/pages/ForgotPassword";
 import Profile from "./pages/Profile";
@@ -46,6 +47,7 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Login /></motion.div>} />
+        <Route path="/agent-login" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><AgentLogin /></motion.div>} />
         <Route path="/register" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><Register /></motion.div>} />
         <Route path="/forgot-password" element={<motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}><ForgotPassword /></motion.div>} />
         <Route path="/" element={<Layout />}>

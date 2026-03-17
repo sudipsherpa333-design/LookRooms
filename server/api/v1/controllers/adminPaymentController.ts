@@ -45,7 +45,7 @@ export const processRefund = async (req: any, res: Response) => {
 
   try {
     // Atomically update to pending to prevent double refund
-    const payment = await Payment.findOneAndUpdate(
+    const payment = await (Payment as any).findOneAndUpdate(
       { 
         _id: paymentId, 
         status: 'success', 
@@ -79,7 +79,7 @@ export const processRefund = async (req: any, res: Response) => {
       await payment.save({ session });
 
       // Release listing if it was booked (optional business logic)
-      await Listing.findByIdAndUpdate(payment.listingId, { lockStatus: 'available' }, { session });
+      await (Listing as any).findByIdAndUpdate(payment.listingId, { lockStatus: 'available' }, { session });
 
       await session.commitTransaction();
 

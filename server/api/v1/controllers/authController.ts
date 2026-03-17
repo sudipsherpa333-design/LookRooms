@@ -40,7 +40,15 @@ export const login = catchAsync(async (req: Request, res: Response) => {
   await user.save();
 
   res.cookie('refreshToken', refreshToken, { httpOnly: true, secure: true, sameSite: 'strict', maxAge: 7 * 24 * 60 * 60 * 1000 });
-  res.json({ accessToken });
+  res.json({ 
+    accessToken,
+    user: {
+      id: user._id,
+      name: user.name,
+      phone: user.phone,
+      role: user.role
+    }
+  });
 });
 
 export const register = catchAsync(async (req: Request, res: Response) => {

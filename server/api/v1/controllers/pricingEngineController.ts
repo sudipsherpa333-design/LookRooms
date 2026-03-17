@@ -8,7 +8,7 @@ export const getMarketPriceIntelligence = async (req: Request, res: Response) =>
   const { city, roomType, area } = req.query;
 
   try {
-    const similarListings = await Listing.find({
+    const similarListings = await (Listing as any).find({
       'location.city': city,
       propertyType: roomType,
       'location.area': area,

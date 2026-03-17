@@ -3,7 +3,7 @@ import { Property, Listing, MaintenanceRequest } from '../../../models/index.js'
 
 export const createProperty = async (req: any, res: Response) => {
   try {
-    const property = new Property({
+    const property = new (Property as any)({
       ...req.body,
       ownerId: req.user.userId
     });
@@ -16,7 +16,7 @@ export const createProperty = async (req: any, res: Response) => {
 
 export const getMyProperties = async (req: any, res: Response) => {
   try {
-    const properties = await Property.find({ ownerId: req.user.userId }).populate('rooms');
+    const properties = await (Property as any).find({ ownerId: req.user.userId }).populate('rooms');
     res.json(properties);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch properties" });
@@ -26,10 +26,10 @@ export const getMyProperties = async (req: any, res: Response) => {
 export const createMaintenanceRequest = async (req: any, res: Response) => {
   try {
     const { listingId } = req.body;
-    const listing = await Listing.findById(listingId);
+    const listing = await (Listing as any).findById(listingId);
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    const request = new MaintenanceRequest({
+    const request = new (MaintenanceRequest as any)({
       ...req.body,
       tenantId: req.user.userId,
       homeownerId: listing.landlordId || listing.homeowner
@@ -46,7 +46,7 @@ export const updateMaintenanceStatus = async (req: any, res: Response) => {
     const { id } = req.params;
     const { status, resolution } = req.body;
     
-    const request = await MaintenanceRequest.findByIdAndUpdate(id, {
+    const request = await (MaintenanceRequest as any).findByIdAndUpdate(id, {
       status,
       resolution,
       resolvedAt: status === 'resolved' ? new Date() : undefined

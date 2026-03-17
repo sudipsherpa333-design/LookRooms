@@ -38,7 +38,7 @@ export const compareRooms = async (req: Request, res: Response) => {
 
   try {
     const idList = (ids as string).split(',');
-    const listings = await Listing.find({ _id: { $in: idList } });
+    const listings = await (Listing as any).find({ _id: { $in: idList } });
     res.json(listings);
   } catch (error) {
     res.status(500).json({ error: "Comparison failed" });

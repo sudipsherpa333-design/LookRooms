@@ -39,7 +39,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     if (!userId || userId !== senderId) return res.status(401).json({ error: "Unauthorized" });
 
-    const message = new Message({
+    const message = new (Message as any)({
       conversationId,
       sender: senderId,
       text,
@@ -51,7 +51,7 @@ export const sendMessage = async (req: Request, res: Response) => {
 
     await message.save();
 
-    await Conversation.findByIdAndUpdate(conversationId, {
+    await (Conversation as any).findByIdAndUpdate(conversationId, {
       lastMessage: message._id,
       updatedAt: new Date(),
     });
@@ -70,7 +70,7 @@ export const getMessages = async (req: Request, res: Response) => {
     const limit = parseInt(req.query.limit as string) || 20;
     const skip = (page - 1) * limit;
 
-    const messages = await Message.find({ conversationId, isDeleted: false })
+    const messages = await (Message as any).find({ conversationId, isDeleted: false })
       .populate("sender", "name avatar")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -89,7 +89,7 @@ export const markMessagesAsRead = async (req: Request, res: Response) => {
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    await Message.updateMany(
+    await (Message as any).updateMany(
       { conversationId, readBy: { $ne: userId } },
       { $addToSet: { readBy: userId, deliveredTo: userId } }
     );
@@ -107,7 +107,7 @@ export const deleteMessage = async (req: Request, res: Response) => {
 
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    const message = await Message.findById(messageId);
+    const message = await (Message as any).findById(messageId);
     if (!message) return res.status(404).json({ error: "Message not found" });
 
     if (message.sender.toString() !== userId) {

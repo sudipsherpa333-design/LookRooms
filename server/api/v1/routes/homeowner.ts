@@ -17,7 +17,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 // Dashboard
 router.get("/dashboard/overview", async (req, res) => {
   try {
-    const listings = await Listing.find({ homeowner: req.user?.id });
+    const listings = await (Listing as any).find({ homeowner: req.user?.id });
     const activeCount = listings.filter((l) => l.status === "active").length;
     const pendingCount = listings.filter((l) => l.status === "pending").length;
 
@@ -39,7 +39,7 @@ router.get("/dashboard/overview", async (req, res) => {
 // Listings Management
 router.get("/listings", async (req, res) => {
   try {
-    const listings = await Listing.find({ homeowner: req.user?.id }).sort({
+    const listings = await (Listing as any).find({ homeowner: req.user?.id }).sort({
       createdAt: -1,
     });
     res.json(listings);
@@ -50,7 +50,7 @@ router.get("/listings", async (req, res) => {
 
 router.post("/listings", async (req, res) => {
   try {
-    const user = await User.findById(req.user?.id);
+    const user = await (User as any).findById(req.user?.id);
     if (user?.role !== 'homeowner' && user?.role !== 'admin') {
       return res.status(403).json({ error: "Only homeowners can create listings" });
     }
@@ -128,7 +128,7 @@ router.post("/listings", async (req, res) => {
 
 router.get("/listings/:id", async (req, res) => {
   try {
-    const listing = await Listing.findOne({
+    const listing = await (Listing as any).findOne({
       _id: req.params.id,
       homeowner: req.user?.id,
     });
@@ -141,7 +141,7 @@ router.get("/listings/:id", async (req, res) => {
 
 router.put("/listings/:id", async (req, res) => {
   try {
-    const listing = await Listing.findOneAndUpdate(
+    const listing = await (Listing as any).findOneAndUpdate(
       { _id: req.params.id, homeowner: req.user?.id },
       req.body,
       { new: true },
@@ -155,7 +155,7 @@ router.put("/listings/:id", async (req, res) => {
 
 router.delete("/listings/:id", async (req, res) => {
   try {
-    const listing = await Listing.findOneAndDelete({
+    const listing = await (Listing as any).findOneAndDelete({
       _id: req.params.id,
       homeowner: req.user?.id,
     });
@@ -169,7 +169,7 @@ router.delete("/listings/:id", async (req, res) => {
 // Applications Management
 router.get("/applications", async (req, res) => {
   try {
-    const applications = await Application.find({ homeowner: req.user?.id })
+    const applications = await (Application as any).find({ homeowner: req.user?.id })
       .populate("applicant", "name email phone avatar bio renterProfile verificationLevel documents")
       .populate("listing", "title location");
     res.json(applications);
@@ -181,11 +181,11 @@ router.get("/applications", async (req, res) => {
 router.put("/applications/:id/accept", async (req, res) => {
   try {
     const userId = req.headers["x-user-id"] as string;
-    const application = await Application.findOne({ _id: req.params.id, homeowner: userId });
+    const application = await (Application as any).findOne({ _id: req.params.id, homeowner: userId });
     if (!application) return res.status(404).json({ error: "Application not found" });
 
     // Duplicate booking protection: Check if any other application is already accepted/completed for this listing
-    const existingAccepted = await Application.findOne({
+    const existingAccepted = await (Application as any).findOne({
       listing: application.listing,
       status: { $in: ["accepted", "completed"] },
       _id: { $ne: application._id }
@@ -218,7 +218,7 @@ router.put("/applications/:id/accept", async (req, res) => {
 router.put("/applications/:id/reject", async (req, res) => {
   try {
     const userId = req.headers["x-user-id"] as string;
-    const application = await Application.findOneAndUpdate(
+    const application = await (Application as any).findOneAndUpdate(
       { _id: req.params.id, homeowner: userId },
       {
         status: "rejected",
@@ -239,7 +239,7 @@ router.put("/applications/:id/reject", async (req, res) => {
 // Maintenance Management
 router.get("/maintenance", async (req, res) => {
   try {
-    const requests = await MaintenanceRequest.find({ homeownerId: req.user?.id })
+    const requests = await (MaintenanceRequest as any).find({ homeownerId: req.user?.id })
       .populate("tenantId", "name email phone avatar")
       .populate("listingId", "title location")
       .sort({ createdAt: -1 });
@@ -256,7 +256,7 @@ router.put("/maintenance/:id", async (req, res) => {
     if (status === 'resolved') {
       update.resolvedAt = new Date();
     }
-    const request = await MaintenanceRequest.findOneAndUpdate(
+    const request = await (MaintenanceRequest as any).findOneAndUpdate(
       { _id: req.params.id, homeownerId: req.user?.id },
       update,
       { new: true }
@@ -271,7 +271,7 @@ router.put("/maintenance/:id", async (req, res) => {
 // Tenant Management
 router.get("/tenants", async (req, res) => {
   try {
-    const applications = await Application.find({
+    const applications = await (Application as any).find({
       homeowner: req.user?.id,
       status: { $in: ["accepted", "completed"] }
     }).populate("applicant", "name email phone avatar renterProfile")

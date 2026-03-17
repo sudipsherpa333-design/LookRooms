@@ -25,7 +25,7 @@ export const initiatePayment = async (req: any, res: Response) => {
   session.startTransaction();
 
   try {
-    const payment = await ServiceFeePayment.findById(feePaymentId).session(session);
+    const payment = await (ServiceFeePayment as any).findById(feePaymentId).session(session);
     if (!payment) {
       await session.abortTransaction();
       return res.status(404).json({ error: 'Payment record not found' });
@@ -60,7 +60,7 @@ export const initiatePayment = async (req: any, res: Response) => {
     const totalAmount = payment.serviceFee;
 
     if (paymentMethod === 'khalti') {
-      const user = await User.findById(userId).session(session);
+      const user = await (User as any).findById(userId).session(session);
       const khaltiResponse = await initiateKhaltiPayment({
         return_url: `${APP_URL}/payment/verify?gateway=khalti`,
         website_url: APP_URL,
@@ -152,14 +152,14 @@ export const verifyPayment = async (req: any, res: Response) => {
       }
     }
 
-    const payment = await ServiceFeePayment.findById(paymentId).session(session);
+    const payment = await (ServiceFeePayment as any).findById(paymentId).session(session);
     if (!payment) {
       await session.abortTransaction();
       return res.status(404).json({ error: 'Payment record not found' });
     }
 
-    const booking = await BookingRequest.findById(payment.bookingRequestId).session(session);
-    const listing = await Listing.findById(payment.listingId).session(session);
+    const booking = await (BookingRequest as any).findById(payment.bookingRequestId).session(session);
+    const listing = await (Listing as any).findById(payment.listingId).session(session);
 
     if (success) {
       payment.paymentStatus = 'paid';
@@ -179,7 +179,7 @@ export const verifyPayment = async (req: any, res: Response) => {
       }
 
       // Notification
-      const notification = new Notification({
+      const notification = new (Notification as any)({
         userId: payment.tenantId,
         type: 'payment_success',
         message: `Service fee of Rs. ${payment.serviceFee} for ${listing?.title} was successful. Request sent to landlord.`,
@@ -191,7 +191,7 @@ export const verifyPayment = async (req: any, res: Response) => {
 
       emitToUser(payment.tenantId.toString(), 'paymentSuccess', { paymentId: payment._id });
       
-      const user = await User.findById(payment.tenantId);
+      const user = await (User as any).findById(payment.tenantId);
       if (user?.email) {
         await sendEmail(user.email, 'Service Fee Payment Successful', `
           <h1>Payment Successful</h1>
@@ -229,7 +229,7 @@ export const retryPayment = async (req: any, res: Response) => {
   const userId = req.user.userId;
 
   try {
-    const payment = await ServiceFeePayment.findById(paymentId);
+    const payment = await (ServiceFeePayment as any).findById(paymentId);
     if (!payment) return res.status(404).json({ error: 'Payment not found' });
 
     if (payment.paymentStatus !== 'failed') {
@@ -265,7 +265,7 @@ export const retryPayment = async (req: any, res: Response) => {
 export const getFeePreview = async (req: Request, res: Response) => {
   const { listingId } = req.params;
   try {
-    const listing = await Listing.findById(listingId);
+    const listing = await (Listing as any).findById(listingId);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
     const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);
@@ -296,13 +296,13 @@ export const getPaymentHistory = async (req: any, res: Response) => {
     const query: any = { tenantId: userId };
     if (status) query.paymentStatus = status;
 
-    const payments = await ServiceFeePayment.find(query)
+    const payments = await (ServiceFeePayment as any).find(query)
       .sort({ createdAt: -1 })
       .skip((Number(page) - 1) * Number(limit))
       .limit(Number(limit))
       .populate('listingId', 'title images');
 
-    const total = await ServiceFeePayment.countDocuments(query);
+    const total = await (ServiceFeePayment as any).countDocuments(query);
 
     res.json({
       payments,
@@ -316,7 +316,7 @@ export const getPaymentHistory = async (req: any, res: Response) => {
 
 export const getOneTapStatus = async (req: any, res: Response) => {
   try {
-    const user = await User.findById(req.user.userId);
+    const user = await (User as any).findById(req.user.userId);
     res.json(user?.savedPaymentTokens || []);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch one-tap status' });
@@ -326,7 +326,7 @@ export const getOneTapStatus = async (req: any, res: Response) => {
 export const deleteOneTapToken = async (req: any, res: Response) => {
   const { gateway } = req.params;
   try {
-    await User.findByIdAndUpdate(req.user.userId, {
+    await (User as any).findByIdAndUpdate(req.user.userId, {
       $pull: { savedPaymentTokens: { gateway } }
     });
     res.json({ success: true });

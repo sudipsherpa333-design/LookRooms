@@ -137,7 +137,7 @@ export const advancedSearch = async (req: Request, res: Response) => {
       }
     });
 
-    const result = await Listing.aggregate(pipeline);
+    const result = await (Listing as any).aggregate(pipeline);
     
     const listings = result[0].listings;
     const facets = result[0].facets[0] || {};

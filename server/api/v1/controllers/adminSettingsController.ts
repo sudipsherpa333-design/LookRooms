@@ -3,11 +3,11 @@ import { SystemSettings } from '../../../models/SystemSettings.js';
 import { catchAsync } from '../../../utils/catchAsync.js';
 
 export const getSystemSettings = catchAsync(async (req: Request, res: Response) => {
-  let settings = await SystemSettings.findOne();
+  let settings = await (SystemSettings as any).findOne();
   
   if (!settings) {
     // Create default settings if they don't exist
-    settings = await SystemSettings.create({
+    settings = await (SystemSettings as any).create({
       defaultServiceFee: 5.0,
       maintenanceMode: false,
       notificationSettings: {
@@ -27,10 +27,10 @@ export const getSystemSettings = catchAsync(async (req: Request, res: Response) 
 export const updateSystemSettings = catchAsync(async (req: Request, res: Response) => {
   const { defaultServiceFee, maintenanceMode, notificationSettings } = req.body;
   
-  let settings = await SystemSettings.findOne();
+  let settings = await (SystemSettings as any).findOne();
   
   if (!settings) {
-    settings = new SystemSettings();
+    settings = new (SystemSettings as any)();
   }
   
   if (defaultServiceFee !== undefined) settings.defaultServiceFee = defaultServiceFee;

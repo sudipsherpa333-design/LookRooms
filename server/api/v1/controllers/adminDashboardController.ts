@@ -4,13 +4,13 @@ import asyncHandler from "express-async-handler";
 
 export const getStatsOverview = asyncHandler(async (req: Request, res: Response) => {
   const [totalUsers, totalListings, totalBookings, totalRevenue, totalReviews, totalPayments, totalShares] = await Promise.all([
-    User.countDocuments(),
-    Listing.countDocuments(),
-    Application.countDocuments(),
-    Payment.aggregate([{ $group: { _id: null, total: { $sum: "$totalAmount" } } }]),
-    Review.countDocuments(),
-    Payment.countDocuments(),
-    ShareTracking.countDocuments()
+    (User as any).countDocuments(),
+    (Listing as any).countDocuments(),
+    (Application as any).countDocuments(),
+    (Payment as any).aggregate([{ $group: { _id: null, total: { $sum: "$totalAmount" } } }]),
+    (Review as any).countDocuments(),
+    (Payment as any).countDocuments(),
+    (ShareTracking as any).countDocuments()
   ]);
 
   res.json({

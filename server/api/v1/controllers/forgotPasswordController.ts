@@ -31,7 +31,7 @@ export const sendOTP = async (req: Request, res: Response) => {
   // Find user
   let user;
   if (channel === 'email') {
-    user = await User.findOne({ email: identifier.toLowerCase() });
+    user = await (User as any).findOne({ email: identifier.toLowerCase() });
   } else {
     // For phone, we have a problem with non-deterministic encryption.
     // In a real app with this setup, we'd need a phoneHash or deterministic encryption.
@@ -40,8 +40,8 @@ export const sendOTP = async (req: Request, res: Response) => {
     // but since it's not, I'll add a comment and try to find a workaround.
     // WORKAROUND: We'll search all users and decrypt their phone numbers. 
     // THIS IS SLOW and should be fixed with a phoneHash in production.
-    const users = await User.find({ phone: { $exists: true } });
-    user = users.find(u => u.phone === identifier);
+    const users = await (User as any).find({ phone: { $exists: true } });
+    user = users.find((u: any) => u.phone === identifier);
   }
 
   // Security: Always return success even if user not found to prevent enumeration
@@ -62,7 +62,7 @@ export const sendOTP = async (req: Request, res: Response) => {
   const otpHash = await bcrypt.hash(otp, 10);
 
   // Save to PasswordReset collection
-  await PasswordReset.create({
+  await (PasswordReset as any).create({
     userId: user._id,
     otpHash,
     channel,
@@ -91,7 +91,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
     return res.status(400).json({ error: 'Identifier, OTP, and channel are required' });
   }
 
-  const resetRecord = await PasswordReset.findOne({
+  const resetRecord = await (PasswordReset as any).findOne({
     identifier,
     channel,
     isUsed: false,
@@ -124,7 +124,7 @@ export const verifyOTP = async (req: Request, res: Response) => {
   const hashedToken = crypto.createHash('sha256').update(rawToken).digest('hex');
 
   // Update User with reset token
-  const user = await User.findById(resetRecord.userId);
+  const user = await (User as any).findById(resetRecord.userId);
   if (!user) return res.status(404).json({ error: 'User not found' });
 
   user.passwordResetToken = hashedToken;
@@ -154,7 +154,7 @@ export const resetPassword = async (req: Request, res: Response) => {
 
   const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
-  const user = await User.findOne({
+  const user = await (User as any).findOne({
     passwordResetToken: hashedToken,
     passwordResetTokenExpiry: { $gt: new Date() }
   });
@@ -220,7 +220,7 @@ export const resendOTP = async (req: Request, res: Response) => {
   }
 
   // Delete old unused OTPs for this identifier
-  await PasswordReset.deleteMany({ identifier, channel, isUsed: false });
+  await (PasswordReset as any).deleteMany({ identifier, channel, isUsed: false });
 
   // Increment resend count
   if (!resendCount) {

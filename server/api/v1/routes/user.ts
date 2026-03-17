@@ -25,7 +25,7 @@ router.use((req: Request, res: Response, next: NextFunction) => {
 // Profile Management
 router.get("/profile", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await (User as any).findById(req.user.id).select("-password");
     res.json(user);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch profile" });
@@ -34,7 +34,7 @@ router.get("/profile", async (req, res) => {
 
 router.put("/profile", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.user.id, req.body, {
+    const user = await (User as any).findByIdAndUpdate(req.user.id, req.body, {
       new: true,
     }).select("-password");
     res.json(user);
@@ -45,7 +45,7 @@ router.put("/profile", async (req, res) => {
 
 router.post("/profile/preferences", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user.id,
       { "renterProfile.preferences": req.body },
       { new: true },
@@ -58,7 +58,7 @@ router.post("/profile/preferences", async (req, res) => {
 
 router.post("/profile/lifestyle", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user.id,
       { "renterProfile.lifestyle": req.body },
       { new: true },
@@ -76,7 +76,7 @@ router.get("/roommate/matches", async (req, res) => {
 
 router.post("/roommate/profile", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user.id,
       { "renterProfile.roommatePreferences": req.body },
       { new: true },
@@ -90,7 +90,7 @@ router.post("/roommate/profile", async (req, res) => {
 // Listings Interaction
 router.get("/favorites", async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate(
+    const user = await (User as any).findById(req.user.id).populate(
       "renterProfile.favoriteListings",
     );
     res.json(user?.renterProfile?.favoriteListings || []);
@@ -101,7 +101,7 @@ router.get("/favorites", async (req, res) => {
 
 router.post("/favorites/:listingId", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user.id,
       { $addToSet: { "renterProfile.favoriteListings": req.params.listingId } },
       { new: true },
@@ -114,7 +114,7 @@ router.post("/favorites/:listingId", async (req, res) => {
 
 router.delete("/favorites/:listingId", async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user.id,
       { $pull: { "renterProfile.favoriteListings": req.params.listingId } },
       { new: true },
@@ -128,7 +128,7 @@ router.delete("/favorites/:listingId", async (req, res) => {
 // Applications
 router.get("/applications", async (req, res) => {
   try {
-    const applications = await Application.find({
+    const applications = await (Application as any).find({
       applicant: req.user.id,
     }).populate("listing");
     res.json(applications);
@@ -139,7 +139,7 @@ router.get("/applications", async (req, res) => {
 
 router.get("/applications/:listingId/check", async (req, res) => {
   try {
-    const application = await Application.findOne({
+    const application = await (Application as any).findOne({
       listing: req.params.listingId,
       applicant: req.user.id,
     });
@@ -151,10 +151,10 @@ router.get("/applications/:listingId/check", async (req, res) => {
 
 router.post("/applications/:listingId", async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.listingId);
+    const listing = await (Listing as any).findById(req.params.listingId);
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    const existingApplication = await Application.findOne({
+    const existingApplication = await (Application as any).findOne({
       listing: req.params.listingId,
       applicant: req.user.id,
     });
@@ -180,7 +180,7 @@ router.post("/applications/:listingId", async (req, res) => {
 router.post("/kyc/submit", async (req, res) => {
   const { documentType, documentUrl, idNumber } = req.body;
   try {
-    const user = await User.findByIdAndUpdate(
+    const user = await (User as any).findByIdAndUpdate(
       req.user?.id,
       {
         verificationLevel: "pending",
@@ -230,8 +230,8 @@ router.post("/viewed", async (req, res) => {
   const { listingId } = req.body;
   try {
     // Remove if already exists to update timestamp
-    await ViewedListing.findOneAndDelete({ userId: req.user?.id, listingId });
-    const view = new ViewedListing({ userId: req.user?.id, listingId });
+    await (ViewedListing as any).findOneAndDelete({ userId: req.user?.id, listingId });
+    const view = new (ViewedListing as any)({ userId: req.user?.id, listingId });
     await view.save();
     res.json({ success: true });
   } catch (error) {
@@ -241,7 +241,7 @@ router.post("/viewed", async (req, res) => {
 
 router.get("/viewed", async (req, res) => {
   try {
-    const views = await ViewedListing.find({ userId: req.user?.id })
+    const views = await (ViewedListing as any).find({ userId: req.user?.id })
       .sort({ viewedAt: -1 })
       .limit(5)
       .populate("listingId");
@@ -255,10 +255,10 @@ router.get("/viewed", async (req, res) => {
 router.post("/maintenance", async (req, res) => {
   try {
     const { listingId, title, description, priority, category, images } = req.body;
-    const listing = await Listing.findById(listingId);
+    const listing = await (Listing as any).findById(listingId);
     if (!listing) return res.status(404).json({ error: "Listing not found" });
 
-    const request = new MaintenanceRequest({
+    const request = new (MaintenanceRequest as any)({
       listingId,
       tenantId: req.user.id,
       homeownerId: listing.homeowner,
@@ -277,7 +277,7 @@ router.post("/maintenance", async (req, res) => {
 
 router.get("/maintenance", async (req, res) => {
   try {
-    const requests = await MaintenanceRequest.find({ tenantId: req.user.id })
+    const requests = await (MaintenanceRequest as any).find({ tenantId: req.user.id })
       .populate("listingId", "title location")
       .sort({ createdAt: -1 });
     res.json(requests);

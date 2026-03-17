@@ -110,14 +110,14 @@ async function startServer() {
       if (!userSockets.has(userId)) userSockets.set(userId, new Set());
       userSockets.get(userId)?.add(socket.id);
       
-      await User.findByIdAndUpdate(userId, { isOnline: true });
+      await User.findByIdAndUpdate(userId, { isOnline: true }, {});
       io.emit("getOnlineUsers", Array.from(userSockets.keys()));
 
       // Missed notifications
-      const missedNotifications = await NotificationModel.find({ userId, 'channels.inApp.sent': false });
+      const missedNotifications = await (NotificationModel as any).find({ userId, 'channels.inApp.sent': false });
       for (const n of missedNotifications) {
         socket.emit('notification', n);
-        await NotificationModel.findByIdAndUpdate(n._id, { 'channels.inApp.sent': true, 'channels.inApp.deliveredAt': new Date() });
+        await NotificationModel.findByIdAndUpdate(n._id, { 'channels.inApp.sent': true, 'channels.inApp.deliveredAt': new Date() }, {});
       }
 
       socket.on("joinRoom", (conversationId) => socket.join(conversationId));
@@ -131,8 +131,8 @@ async function startServer() {
             readBy: [userId], deliveredTo: [userId]
           });
           await message.save();
-          await Conversation.findByIdAndUpdate(conversationId, { lastMessage: message._id, updatedAt: new Date() });
-          const populatedMessage = await Message.findById(message._id).populate("sender", "name avatar");
+          await Conversation.findByIdAndUpdate(conversationId, { lastMessage: message._id, updatedAt: new Date() }, {});
+          const populatedMessage = await (Message.findById(message._id) as any).populate("sender", "name avatar");
           io.to(conversationId).emit("newMessage", populatedMessage);
         } catch (error) {
           console.error("Socket error:", error);
@@ -145,7 +145,7 @@ async function startServer() {
           sockets.delete(socket.id);
           if (sockets.size === 0) {
             userSockets.delete(userId);
-            await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() });
+            await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() }, {});
           }
         }
         io.emit("getOnlineUsers", Array.from(userSockets.keys()));

@@ -10,9 +10,9 @@ export const adminAiAssistant = async (req: Request, res: Response) => {
   try {
     // In a real app, we'd translate the query to Mongoose calls.
     // For now, we'll use AI to summarize platform health.
-    const userCount = await User.countDocuments();
-    const listingCount = await Listing.countDocuments();
-    const activeBookings = await Listing.countDocuments({ status: 'rented' });
+    const userCount = await (User as any).countDocuments();
+    const listingCount = await (Listing as any).countDocuments();
+    const activeBookings = await (Listing as any).countDocuments({ status: 'rented' });
     
     const prompt = `You are an admin assistant for LookRooms.
     Current Stats:
@@ -38,7 +38,7 @@ export const adminAiAssistant = async (req: Request, res: Response) => {
 export const fraudDetection = async (req: Request, res: Response) => {
   try {
     // Simple fraud detection: find users with same phone or suspicious activity
-    const suspiciousUsers = await User.find({
+    const suspiciousUsers = await (User as any).find({
       $or: [
         { trustScore: { $lt: 40 } },
         { accountStatus: 'suspended' }
@@ -53,7 +53,7 @@ export const fraudDetection = async (req: Request, res: Response) => {
 
 export const revenueIntelligence = async (req: Request, res: Response) => {
   try {
-    const payments = await Payment.aggregate([
+    const payments = await (Payment as any).aggregate([
       { $match: { status: 'success' } },
       { $group: { _id: null, totalRevenue: { $sum: "$amount" }, count: { $sum: 1 } } }
     ]);

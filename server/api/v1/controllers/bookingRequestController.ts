@@ -21,7 +21,7 @@ export const createBookingRequest = async (req: any, res: Response) => {
 
   try {
     // 1. Atomic Locking
-    const listing = await Listing.findOneAndUpdate(
+    const listing = await (Listing as any).findOneAndUpdate(
       { _id: listingId, lockStatus: 'available', status: 'active' },
       { $set: { lockStatus: 'locked', lockedBy: tenantId, lockExpiresAt: new Date(Date.now() + 30 * 60 * 1000) } },
       { session, new: true }
@@ -35,7 +35,7 @@ export const createBookingRequest = async (req: any, res: Response) => {
 
     // 2. Idempotency Check
     if (idempotencyKey) {
-      const existingPayment = await ServiceFeePayment.findOne({ idempotencyKey }).session(session);
+      const existingPayment = await (ServiceFeePayment as any).findOne({ idempotencyKey }).session(session);
       if (existingPayment) {
         await session.abortTransaction();
         session.endSession();
@@ -44,7 +44,7 @@ export const createBookingRequest = async (req: any, res: Response) => {
     }
 
     // 3. Check for existing active request
-    const existing = await BookingRequest.findOne({
+    const existing = await (BookingRequest as any).findOne({
       tenantId,
       listingId,
       status: { $nin: ['rejected', 'expired', 'cancelled', 'completed'] }

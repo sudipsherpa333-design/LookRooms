@@ -9,13 +9,13 @@ export const createOrGetConversation = async (req: Request, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
     // Check if conversation already exists
-    let conversation = await Conversation.findOne({
+    let conversation = await (Conversation as any).findOne({
       participants: { $all: [seekerId, ownerId] },
       ...(roomId ? { roomListing: roomId } : {})
     }).populate("participants", "name avatar role isOnline lastSeen").populate("roomListing");
 
     if (!conversation) {
-      conversation = new Conversation({
+      conversation = new (Conversation as any)({
         participants: [seekerId, ownerId],
         roomListing: roomId || undefined
       });
@@ -37,7 +37,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
     const userId = req.user?.id;
     if (!userId) return res.status(401).json({ error: "Unauthorized" });
 
-    const conversations = await Conversation.find({ participants: userId, isArchived: false })
+    const conversations = await (Conversation as any).find({ participants: userId, isArchived: false })
       .populate("participants", "name avatar role isOnline lastSeen")
       .populate("lastMessage")
       .populate("roomListing", "title price images area city")
@@ -52,7 +52,7 @@ export const getUserConversations = async (req: Request, res: Response) => {
 export const getConversationById = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const conversation = await Conversation.findById(id)
+    const conversation = await (Conversation as any).findById(id)
       .populate("participants", "name avatar role isOnline lastSeen")
       .populate("roomListing", "title price images area city");
 

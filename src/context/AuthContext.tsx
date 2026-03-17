@@ -18,7 +18,7 @@ interface AuthContextType {
   login: (
     phone: string,
     password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; user?: User }>;
   register: (
     name: string,
     phone: string,
@@ -71,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         if (data.token) {
           localStorage.setItem("krf_token", data.token);
         }
-        return { success: true };
+        return { success: true, user: data.user };
       }
       return { success: false, error: data.error || "Login failed" };
     } catch (error) {

@@ -851,24 +851,6 @@ const messageSchema = new mongoose.Schema({
 
 export const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);
 
-const contactLogSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  ownerId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing" },
-  contactMethod: { type: String, default: "whatsapp" },
-  platform: { type: String, default: "whatsapp" },
-  timestamp: { type: Date, default: Date.now },
-});
-
-export const ContactLog = mongoose.models.ContactLog || mongoose.model("ContactLog", contactLogSchema);
-
-const viewedListingSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: "Listing", required: true, index: true },
-  viewedAt: { type: Date, default: Date.now },
-});
-viewedListingSchema.index({ userId: 1, viewedAt: -1 });
-export const ViewedListing = mongoose.models.ViewedListing || mongoose.model("ViewedListing", viewedListingSchema);
 
 const paymentSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -901,23 +883,6 @@ const paymentSchema = new mongoose.Schema({
 
 export const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
 
-const supportTicketSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  name: { type: String, required: true },
-  email: { type: String, required: true },
-  subject: { type: String, required: true },
-  message: { type: String, required: true },
-  category: { type: String, enum: ['payment', 'booking', 'refund', 'general', 'other'] },
-  status: { type: String, enum: ['open', 'in-progress', 'resolved', 'closed'], default: 'open' },
-  priority: { type: String, enum: ['low', 'medium', 'high', 'urgent'], default: 'medium' },
-  paymentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }, // optional link to payment
-  adminReply: { type: String },
-  repliedAt: { type: Date },
-  repliedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  createdAt: { type: Date, default: Date.now }
-});
-
-export const SupportTicket = mongoose.models.SupportTicket || mongoose.model("SupportTicket", supportTicketSchema);
 
 const feeRuleSchema = new mongoose.Schema({
   minAmount: { type: Number },
@@ -952,103 +917,10 @@ export * from "./models/agent/AgentLead.js";
 export * from "./models/agent/AgentReview.js";
 
 
-const reviewSchema = new mongoose.Schema({
-  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Booking', required: true },
-  reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  revieweeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  reviewerRole: { type: String, enum: ['tenant', 'landlord'] },
-  ratings: {
-    cleanliness: { type: Number, min: 1, max: 5 },
-    ownerResponse: { type: Number, min: 1, max: 5 },
-    waterSupply: { type: Number, min: 1, max: 5 },
-    electricity: { type: Number, min: 1, max: 5 },
-    location: { type: Number, min: 1, max: 5 },
-    valueForMoney: { type: Number, min: 1, max: 5 },
-    security: { type: Number, min: 1, max: 5 },
-    overallExperience: { type: Number, min: 1, max: 5 }
-  },
-  tenantRatings: {
-    cleanliness: { type: Number, min: 1, max: 5 },
-    rentPaymentTime: { type: Number, min: 1, max: 5 },
-    behaviour: { type: Number, min: 1, max: 5 },
-    propertyCaretaking: { type: Number, min: 1, max: 5 },
-    communication: { type: Number, min: 1, max: 5 }
-  },
-  comment: { type: String, maxLength: 1000 },
-  isPublic: { type: Boolean, default: true },
-  isVerified: { type: Boolean, default: false },
-  status: { type: String, enum: ['pending','published','flagged','removed'], default: 'pending' },
-  helpfulVotes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
-  ownerReply: { type: String },
-  ownerRepliedAt: { type: Date },
-  flaggedReason: { type: String },
-  averageRating: { type: Number },
-  
-  // Advanced Review Features
-  photoUrls:      [{ type: String }],
-  stayDuration:   { type: Number },
-  isPhotoVerified:{ type: Boolean, default: false },
-  aiSummaryUsed:  { type: Boolean, default: false },
-  dispute: {
-    status:     { type: String, enum: ['none', 'pending', 'resolved', 'dismissed'], default: 'none' },
-    reason:     String,
-    evidence:   [String],
-    resolution: String,
-    resolvedAt: Date
-  },
-  incentiveGiven: { type: Boolean, default: false },
-  incentiveAmount:{ type: Number }
-}, { timestamps: true });
-export const Review = mongoose.models.Review || mongoose.model("Review", reviewSchema);
 
-const shareTrackingSchema = new mongoose.Schema({
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  sharedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  platform: { type: String, enum: ['whatsapp','facebook','messenger','twitter','copy_link','instagram'] },
-  ipAddress: { type: String },
-  userAgent: { type: String },
-  clickCount: { type: Number, default: 0 },
-}, { timestamps: true });
-export const ShareTracking = mongoose.models.ShareTracking || mongoose.model("ShareTracking", shareTrackingSchema);
 
-const adminLogSchema = new mongoose.Schema({
-  adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  action: { type: String },
-  targetType: { type: String },
-  targetId: { type: mongoose.Schema.Types.ObjectId },
-  details: { type: Object },
-  ipAddress: { type: String },
-}, { timestamps: true });
-export const AdminLog = mongoose.models.AdminLog || mongoose.model("AdminLog", adminLogSchema);
 
-const maintenanceRequestSchema = new mongoose.Schema({
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
-  tenantId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  homeownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  title: { type: String, required: true },
-  description: { type: String, required: true },
-  priority: { type: String, enum: ['low', 'medium', 'high', 'emergency'], default: 'medium' },
-  status: { type: String, enum: ['open', 'in-progress', 'resolved', 'closed'], default: 'open' },
-  images: [String],
-  category: { type: String, enum: ['plumbing', 'electrical', 'appliance', 'structural', 'other'], default: 'other' },
-  adminNotes: { type: String },
-  resolvedAt: { type: Date },
-}, { timestamps: true });
 
-export const MaintenanceRequest = mongoose.models.MaintenanceRequest || mongoose.model("MaintenanceRequest", maintenanceRequestSchema);
-
-const propertySchema = new mongoose.Schema({
-  ownerId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  name:        { type: String, required: true },
-  address:     String,
-  totalRooms:  Number,
-  sharedPhotos:[String],
-  amenities:   [String],
-  rooms:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }]
-}, { timestamps: true });
-
-export const Property = mongoose.models.Property || mongoose.model("Property", propertySchema);
 
 const boostSchema = new mongoose.Schema({
   listingId:   { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },

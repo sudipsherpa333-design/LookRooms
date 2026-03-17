@@ -1,5 +1,8 @@
 import { Request, Response } from 'express';
-import { Agent, AgentLead, AgentReview, Listing, User } from '../../../../server/models.js';
+import { Agent } from '../../../../server/models/agent/Agent.js';
+import { AgentLead } from '../../../../server/models/agent/AgentLead.js';
+import { AgentReview } from '../../../../server/models/agent/AgentReview.js';
+import { Listing, User } from '../../../../server/models/index.js';
 
 // --- AGENT AUTH & SETUP ---
 
@@ -8,7 +11,7 @@ export const registerAgent = async (req: Request, res: Response) => {
     const userId = (req as any).user?.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-    const existingAgent = await Agent.findOne({ userId });
+    const existingAgent = await (Agent as any).findOne({ userId });
     if (existingAgent) {
       return res.status(400).json({ error: 'Agent profile already exists' });
     }
@@ -16,7 +19,7 @@ export const registerAgent = async (req: Request, res: Response) => {
     const { agencyName, agencySlug, agencyPhone, agencyAddress, agencyCity, licenseNumber } = req.body;
 
     // Check if slug is unique
-    const slugExists = await Agent.findOne({ agencySlug });
+    const slugExists = await (Agent as any).findOne({ agencySlug });
     if (slugExists) {
       return res.status(400).json({ error: 'Agency slug is already taken' });
     }
@@ -35,7 +38,7 @@ export const registerAgent = async (req: Request, res: Response) => {
     await newAgent.save();
 
     // Update user role to agent
-    await User.findByIdAndUpdate(userId, { role: 'agent' });
+    await User.findByIdAndUpdate(userId, { role: 'agent' }, {} as any);
 
     res.status(201).json({ message: 'Agent registration submitted successfully', agent: newAgent });
   } catch (error) {
@@ -73,7 +76,7 @@ export const updateAgentProfile = async (req: Request, res: Response) => {
     delete updates.trustScore;
     delete updates.plan;
 
-    const agent = await Agent.findOneAndUpdate({ userId }, updates, { new: true });
+    const agent = await (Agent as any).findOneAndUpdate({ userId }, updates, { new: true });
     
     if (!agent) {
       return res.status(404).json({ error: 'Agent profile not found' });
@@ -89,7 +92,7 @@ export const updateAgentProfile = async (req: Request, res: Response) => {
 export const getAgentStatus = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.userId;
-    const agent = await Agent.findOne({ userId }).select('isVerified isSuspended plan planExpiry');
+    const agent = await (Agent as any).findOne({ userId }).select('isVerified isSuspended plan planExpiry');
     
     if (!agent) {
       return res.status(404).json({ error: 'Agent profile not found' });
@@ -114,7 +117,7 @@ export const getAgentListings = async (req: Request, res: Response) => {
     const agent = await Agent.findOne({ userId });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-    const listings = await Listing.find({ agentId: agent._id }).sort({ createdAt: -1 });
+    const listings = await (Listing as any).find({ agentId: agent._id }).sort({ createdAt: -1 });
     res.json({ listings });
   } catch (error) {
     console.error('Error fetching agent listings:', error);
@@ -141,7 +144,7 @@ export const createAgentListing = async (req: Request, res: Response) => {
     await newListing.save();
 
     // Update agent stats
-    await Agent.findByIdAndUpdate(agent._id, { $inc: { 'stats.totalListings': 1, 'stats.activeListings': 1 } });
+    await (Agent as any).findByIdAndUpdate(agent._id, { $inc: { 'stats.totalListings': 1, 'stats.activeListings': 1 } });
 
     res.status(201).json({ message: 'Listing created successfully', listing: newListing });
   } catch (error) {
@@ -157,7 +160,7 @@ export const updateAgentListing = async (req: Request, res: Response) => {
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
     const { id } = req.params;
-    const listing = await Listing.findOneAndUpdate(
+    const listing = await (Listing as any).findOneAndUpdate(
       { _id: id, agentId: agent._id },
       req.body,
       { new: true }
@@ -177,7 +180,7 @@ export const updateAgentListing = async (req: Request, res: Response) => {
 export const getFeeStructure = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user?.userId;
-    const agent = await Agent.findOne({ userId }).select('feeStructure defaultServiceFee');
+    const agent = await (Agent as any).findOne({ userId }).select('feeStructure defaultServiceFee');
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
     res.json({ feeStructure: agent.feeStructure, defaultServiceFee: agent.defaultServiceFee });
@@ -215,7 +218,7 @@ export const getAgentLeads = async (req: Request, res: Response) => {
     const agent = await Agent.findOne({ userId });
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-    const leads = await AgentLead.find({ agentId: agent._id })
+    const leads = await (AgentLead as any).find({ agentId: agent._id })
       .populate('tenantId', 'name email phone avatar')
       .populate('listingId', 'title price location images')
       .sort({ updatedAt: -1 });
@@ -236,7 +239,7 @@ export const updateLeadStatus = async (req: Request, res: Response) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const lead = await AgentLead.findOneAndUpdate(
+    const lead = await (AgentLead as any).findOneAndUpdate(
       { _id: id, agentId: agent._id },
       { status },
       { new: true }
@@ -273,16 +276,16 @@ export const getAgentAnalyticsOverview = async (req: Request, res: Response) => 
 export const getPublicAgentProfile = async (req: Request, res: Response) => {
   try {
     const { slug } = req.params;
-    const agent = await Agent.findOne({ agencySlug: slug, isVerified: true })
+    const agent = await (Agent as any).findOne({ agencySlug: slug, isVerified: true })
       .select('-licenseNumber -licenseDocUrl -plan -planExpiry'); // Hide sensitive info
 
     if (!agent) return res.status(404).json({ error: 'Agent not found' });
 
-    const listings = await Listing.find({ agentId: agent._id, status: 'active' })
+    const listings = await (Listing as any).find({ agentId: agent._id, status: 'active' })
       .select('title price location images propertyType')
       .limit(10);
 
-    const reviews = await AgentReview.find({ agentId: agent._id, status: 'published' })
+    const reviews = await (AgentReview as any).find({ agentId: agent._id, status: 'published' })
       .populate('reviewerId', 'name avatar')
       .limit(5);
 
@@ -295,7 +298,7 @@ export const getPublicAgentProfile = async (req: Request, res: Response) => {
 
 export const getAllAgents = async (req: Request, res: Response) => {
   try {
-    const agents = await Agent.find({ isVerified: true, isActive: true })
+    const agents = await (Agent as any).find({ isVerified: true, isActive: true })
       .select('agencyName agencySlug agencyLogo agencyCity stats trustBadge')
       .sort({ 'stats.totalDeals': -1 })
       .limit(20);

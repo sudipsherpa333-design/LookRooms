@@ -6,7 +6,7 @@ import { calculateServiceFee } from '../../../utils/feeCalculator.js';
 export const getFeePreview = async (req: Request, res: Response) => {
   const { listingId } = req.params;
   try {
-    const listing = await Listing.findById(listingId);
+    const listing = await (Listing as any).findById(listingId);
     if (!listing) return res.status(404).json({ error: 'Listing not found' });
 
     const serviceFee = await calculateServiceFee(listing.propertyType || listing.roomType);

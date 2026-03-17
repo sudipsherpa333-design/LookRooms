@@ -7,7 +7,7 @@ export const initBookingStatus = asyncHandler(async (req: Request, res: Response
   const { bookingId } = req.params;
   const { listingId, tenantId, landlordId } = req.body;
 
-  const status = new BookingStatus({
+  const status = new (BookingStatus as any)({
     bookingId,
     listingId,
     tenantId,
@@ -29,7 +29,7 @@ export const updateBookingStatus = asyncHandler(async (req: Request, res: Respon
   const userId = req.user?.id;
   const role = (req.user as any)?.role; // Assuming role is in user object
 
-  const status = await BookingStatus.findOne({ bookingId });
+  const status = await (BookingStatus as any).findOne({ bookingId });
   if (!status) {
     res.status(404).json({ error: "Booking status not found" });
     return;
@@ -50,9 +50,9 @@ export const updateBookingStatus = asyncHandler(async (req: Request, res: Respon
 
   // Update listing lockStatus
   if (['booked'].includes(newStatus)) {
-    await Listing.findByIdAndUpdate(status.listingId, { lockStatus: 'booked' });
+    await (Listing as any).findByIdAndUpdate(status.listingId, { lockStatus: 'booked' });
   } else if (['no_deal', 'not_interested', 'room_not_available'].includes(newStatus)) {
-    await Listing.findByIdAndUpdate(status.listingId, { lockStatus: 'available' });
+    await (Listing as any).findByIdAndUpdate(status.listingId, { lockStatus: 'available' });
   }
 
   res.json({ currentStatus: status.currentStatus, statusHistory: status.statusHistory });
