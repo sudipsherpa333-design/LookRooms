@@ -24,7 +24,7 @@ const AgentLayout = () => {
   }
 
   if (!user || user.role !== 'agent') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/agent-login" replace />;
   }
 
   const navItems = [

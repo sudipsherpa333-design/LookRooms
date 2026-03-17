@@ -9,7 +9,7 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -20,7 +20,8 @@ export default function Login() {
     const result = await login(phone, password);
     if (result.success && result.user) {
       if (result.user.role === 'agent') {
-        navigate('/agent/dashboard');
+        logout();
+        setError("Please use the Agent Login page to access your account.");
       } else {
         navigate('/');
       }
@@ -135,6 +136,15 @@ export default function Login() {
               password:{" "}
               <span className="font-mono bg-stone-100 px-1 rounded">admin9813@#$</span>
             </p>
+          </div>
+
+          <div className="mt-6 border-t border-stone-200 pt-6">
+            <Link
+              to="/agent-login"
+              className="w-full flex justify-center py-3 px-4 border border-stone-300 rounded-xl shadow-sm text-sm font-bold text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors"
+            >
+              Sign in as Property Agent
+            </Link>
           </div>
         </div>
       </div>

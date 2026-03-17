@@ -9,7 +9,7 @@ export default function AgentLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,8 +21,11 @@ export default function AgentLogin() {
     if (result.success && result.user) {
       if (result.user.role === 'agent') {
         navigate('/agent/dashboard');
+      } else if (result.user.role === 'admin') {
+        navigate('/admin/dashboard');
       } else {
-        setError("You are not an agent.");
+        logout();
+        setError("You are not authorized to login as an agent. Please use the User Login page.");
       }
     } else {
       setError(result.error || "Login failed");
@@ -105,6 +108,15 @@ export default function AgentLogin() {
                 </button>
               </div>
             </form>
+
+          <div className="mt-6 border-t border-stone-200 pt-6">
+            <Link
+              to="/login"
+              className="w-full flex justify-center py-3 px-4 border border-stone-300 rounded-xl shadow-sm text-sm font-bold text-stone-700 bg-white hover:bg-stone-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              Sign in as User
+            </Link>
+          </div>
         </div>
       </div>
     </div>
