@@ -18,6 +18,7 @@ const sendOTPLimiter = rateLimit({
   message: { error: 'Too many OTP requests from this IP. Please try again in an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
+  passOnStoreError: true,
 });
 
 const verifyOTPLimiter = rateLimit({
@@ -29,6 +30,7 @@ const verifyOTPLimiter = rateLimit({
   message: { error: 'Too many verification attempts. Please try again in an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
+  passOnStoreError: true,
 });
 
 router.post('/login', [

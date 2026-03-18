@@ -10,11 +10,15 @@ cron.schedule('0 9 * * 1', async () => {
     // Fetch stats (mocked for now)
     const stats = { views: 247, inquiries: 18, bookings: 3 };
     
-    emailQueue.add('sendEmail', {
-      to: landlord.email,
-      subject: '📊 Your Weekly Room Performance',
-      templateName: 'weekly-digest',
-      templateData: { name: landlord.name, stats }
-    });
+    try {
+      await emailQueue.add('sendEmail', {
+        to: landlord.email,
+        subject: '📊 Your Weekly Room Performance',
+        templateName: 'weekly-digest',
+        templateData: { name: landlord.name, stats }
+      });
+    } catch (err) {
+      console.error('Failed to add weekly digest email to queue:', err);
+    }
   }
 });

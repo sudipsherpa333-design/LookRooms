@@ -4,7 +4,16 @@ import { EmailLog } from '../models/EmailLog.js';
 import { Notification } from '../models/Notification.js';
 
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis-16329.crce220.us-east-1-4.ec2.cloud.redislabs.com:16329';
-export const emailQueue = new Bull('email', REDIS_URL);
+export const emailQueue = new Bull('email', REDIS_URL, {
+  redis: {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false
+  }
+});
+
+emailQueue.on('error', (error) => {
+  console.error('emailQueue Redis error:', error.message || error);
+});
 
 emailQueue.process('sendEmail', 5, async (job) => {
   const { notificationId, to, subject, templateName, templateData } = job.data;

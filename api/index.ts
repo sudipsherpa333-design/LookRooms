@@ -77,18 +77,6 @@ async function startServer() {
 
   await connectDB();
 
-  // Middleware to ensure DB is connected
-  app.use((req, res, next) => {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({
-        success: false,
-        message: "Database connection is not established. Please try again in a few seconds.",
-        readyState: mongoose.connection.readyState
-      });
-    }
-    next();
-  });
-
   // Socket.io Logic (Skip on Vercel)
   if (!process.env.VERCEL) {
     const userSockets = new Map<string, Set<string>>();
@@ -110,14 +98,18 @@ async function startServer() {
       if (!userSockets.has(userId)) userSockets.set(userId, new Set());
       userSockets.get(userId)?.add(socket.id);
       
-      await User.findByIdAndUpdate(userId, { isOnline: true }, {});
-      io.emit("getOnlineUsers", Array.from(userSockets.keys()));
+      try {
+        await User.findByIdAndUpdate(userId, { isOnline: true }, {});
+        io.emit("getOnlineUsers", Array.from(userSockets.keys()));
 
-      // Missed notifications
-      const missedNotifications = await (NotificationModel as any).find({ userId, 'channels.inApp.sent': false });
-      for (const n of missedNotifications) {
-        socket.emit('notification', n);
-        await NotificationModel.findByIdAndUpdate(n._id, { 'channels.inApp.sent': true, 'channels.inApp.deliveredAt': new Date() }, {});
+        // Missed notifications
+        const missedNotifications = await (NotificationModel as any).find({ userId, 'channels.inApp.sent': false });
+        for (const n of missedNotifications) {
+          socket.emit('notification', n);
+          await NotificationModel.findByIdAndUpdate(n._id, { 'channels.inApp.sent': true, 'channels.inApp.deliveredAt': new Date() }, {});
+        }
+      } catch (error) {
+        console.error("Socket connection error:", error);
       }
 
       socket.on("joinRoom", (conversationId) => socket.join(conversationId));
@@ -140,15 +132,19 @@ async function startServer() {
       });
 
       socket.on("disconnect", async () => {
-        const sockets = userSockets.get(userId);
-        if (sockets) {
-          sockets.delete(socket.id);
-          if (sockets.size === 0) {
-            userSockets.delete(userId);
-            await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() }, {});
+        try {
+          const sockets = userSockets.get(userId);
+          if (sockets) {
+            sockets.delete(socket.id);
+            if (sockets.size === 0) {
+              userSockets.delete(userId);
+              await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() }, {});
+            }
           }
+          io.emit("getOnlineUsers", Array.from(userSockets.keys()));
+        } catch (error) {
+          console.error("Socket disconnect error:", error);
         }
-        io.emit("getOnlineUsers", Array.from(userSockets.keys()));
       });
     });
   }

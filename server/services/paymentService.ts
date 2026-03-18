@@ -33,18 +33,22 @@ export const unlockListing = async (listingId: string) => {
 };
 
 export const cleanupExpiredLocks = async () => {
-  const now = new Date();
-  const expiredListings = await Listing.find({
-    lockStatus: 'locked',
-    lockExpiresAt: { $lt: now },
-  });
+  try {
+    const now = new Date();
+    const expiredListings = await Listing.find({
+      lockStatus: 'locked',
+      lockExpiresAt: { $lt: now },
+    });
 
-  for (const listing of expiredListings) {
-    await unlockListing(listing._id.toString());
-    // Also update pending payments to failed if they expired
-    await Payment.updateMany(
-      { listingId: listing._id, status: "pending", createdAt: { $lt: new Date(now.getTime() - 15 * 60 * 1000) } },
-      { status: "failed" }
-    );
+    for (const listing of expiredListings) {
+      await unlockListing(listing._id.toString());
+      // Also update pending payments to failed if they expired
+      await Payment.updateMany(
+        { listingId: listing._id, status: "pending", createdAt: { $lt: new Date(now.getTime() - 15 * 60 * 1000) } },
+        { status: "failed" }
+      );
+    }
+  } catch (error) {
+    console.error("Error in cleanupExpiredLocks:", error);
   }
 };

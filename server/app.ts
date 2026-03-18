@@ -14,6 +14,7 @@ import redis from "./utils/redis.js";
 import apiV1 from "./api/v1/index.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import logger from "./utils/logger.js";
+import mongoose from "mongoose";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ const globalLimiter = rateLimit({
   }) : undefined,
   standardHeaders: true,
   legacyHeaders: false,
+  passOnStoreError: true,
 });
 app.use("/api/", globalLimiter);
 
@@ -57,10 +59,27 @@ app.use(express.json({ limit: "10mb" })); // Strict body size limit
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());
 
+// Middleware to ensure DB is connected before handling API requests
+app.use("/api", (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: "Database connection is not established. Please try again in a few seconds.",
+      readyState: mongoose.connection.readyState
+    });
+  }
+  next();
+});
+
 // API Routes
 app.use("/api/v1", apiV1);
 // Backward compatibility for existing routes
 app.use("/api", apiV1);
+
+// Handle API 404s
+app.use("/api", (req, res) => {
+  res.status(404).json({ success: false, message: "API endpoint not found" });
+});
 
 // Static files (Production)
 if (process.env.NODE_ENV === "production") {

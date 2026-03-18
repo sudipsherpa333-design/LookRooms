@@ -6,9 +6,15 @@ export const advancedSearch = async (req: Request, res: Response) => {
   const cacheKey = `search:${JSON.stringify(req.query)}`;
   
   try {
-    const cachedData = await redis.get(cacheKey);
-    if (cachedData) {
-      return res.json(JSON.parse(cachedData));
+    try {
+      if (redis && redis.status === 'ready') {
+        const cachedData = await redis.get(cacheKey);
+        if (cachedData) {
+          return res.json(JSON.parse(cachedData));
+        }
+      }
+    } catch (err) {
+      console.error("Redis cache get error:", err);
     }
 
     const {
@@ -159,7 +165,13 @@ export const advancedSearch = async (req: Request, res: Response) => {
       totalPages: Math.ceil(total / Number(limit))
     };
 
-    await redis.set(cacheKey, JSON.stringify(response), 'EX', 120); // 2 minutes
+    try {
+      if (redis && redis.status === 'ready') {
+        await redis.set(cacheKey, JSON.stringify(response), 'EX', 120); // 2 minutes
+      }
+    } catch (err) {
+      console.error("Redis cache set error:", err);
+    }
 
     res.json(response);
 

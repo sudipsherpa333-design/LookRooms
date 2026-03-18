@@ -15,11 +15,24 @@ export const blacklistToken = async (jti: string, exp: number) => {
   const now = Math.floor(Date.now() / 1000);
   const ttl = exp - now;
   if (ttl > 0) {
-    await redis.set(`blacklist:${jti}`, 'true', 'EX', ttl);
+    try {
+      if (redis && redis.status === 'ready') {
+        await redis.set(`blacklist:${jti}`, 'true', 'EX', ttl);
+      }
+    } catch (err) {
+      console.error('Redis error during blacklistToken:', err);
+    }
   }
 };
 
 export const isTokenBlacklisted = async (jti: string) => {
-  const blacklisted = await redis.get(`blacklist:${jti}`);
-  return !!blacklisted;
+  try {
+    if (redis && redis.status === 'ready') {
+      const blacklisted = await redis.get(`blacklist:${jti}`);
+      return !!blacklisted;
+    }
+  } catch (err) {
+    console.error('Redis error during isTokenBlacklisted:', err);
+  }
+  return false;
 };

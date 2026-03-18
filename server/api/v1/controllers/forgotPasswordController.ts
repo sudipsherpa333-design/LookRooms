@@ -214,19 +214,32 @@ export const resendOTP = async (req: Request, res: Response) => {
 
   // Check rate limit for resend (3 per hour per identifier)
   const resendKey = `resend_otp:${identifier}`;
-  const resendCount = await redis.get(resendKey);
-  if (resendCount && parseInt(resendCount) >= 3) {
-    return res.status(429).json({ error: 'Too many resend attempts. Please try again in an hour.' });
+  let resendCount = null;
+  try {
+    if (redis && redis.status === 'ready') {
+      resendCount = await redis.get(resendKey);
+      if (resendCount && parseInt(resendCount) >= 3) {
+        return res.status(429).json({ error: 'Too many resend attempts. Please try again in an hour.' });
+      }
+    }
+  } catch (err) {
+    console.error('Redis error during resendOTP:', err);
   }
 
   // Delete old unused OTPs for this identifier
   await (PasswordReset as any).deleteMany({ identifier, channel, isUsed: false });
 
   // Increment resend count
-  if (!resendCount) {
-    await redis.set(resendKey, 1, 'EX', 3600);
-  } else {
-    await redis.incr(resendKey);
+  try {
+    if (redis && redis.status === 'ready') {
+      if (!resendCount) {
+        await redis.set(resendKey, 1, 'EX', 3600);
+      } else {
+        await redis.incr(resendKey);
+      }
+    }
+  } catch (err) {
+    console.error('Redis error during resendOTP increment:', err);
   }
 
   // Reuse sendOTP logic
