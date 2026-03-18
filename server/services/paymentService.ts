@@ -1,4 +1,4 @@
-import { Listing, Payment, Application } from "../models.js";
+import { Listing, Payment, Application } from "../models/index.js";
 
 export const calculateServiceFee = (propertyType: string): number => {
   switch (propertyType) {

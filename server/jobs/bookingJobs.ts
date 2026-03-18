@@ -1,7 +1,5 @@
 import cron from 'node-cron';
-import { Listing } from '../models.js';
-import { BookingRequest } from '../models/BookingRequest.js';
-import { ServiceFeePayment } from '../models/ServiceFeePayment.js';
+import { Listing, BookingRequest, ServiceFeePayment } from '../models/index.js';
 import { emitToUser } from '../utils/socketEmitter.js';
 
 export const setupCronJobs = () => {
