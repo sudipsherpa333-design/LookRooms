@@ -39,14 +39,16 @@ export const notificationService = {
     // Email
     if (pref.channels.email && pref.categories[config.category as keyof typeof pref.categories].email) {
       try {
-        await emailQueue.add('sendEmail', {
-          notificationId: notification._id,
-          userId,
-          to: user.email,
-          subject: config.emailSubject(data),
-          templateName: config.emailTemplate,
-          templateData: { ...data, userName: user.name }
-        });
+        if (emailQueue) {
+          await emailQueue.add('sendEmail', {
+            notificationId: notification._id,
+            userId,
+            to: user.email,
+            subject: config.emailSubject(data),
+            templateName: config.emailTemplate,
+            templateData: { ...data, userName: user.name }
+          });
+        }
       } catch (err) {
         console.error('Failed to add email job to queue:', err);
       }
@@ -55,12 +57,14 @@ export const notificationService = {
     // Push
     if (pref.channels.push && pref.pushToken) {
       try {
-        await pushQueue.add('sendPush', {
-          token: pref.pushToken,
-          title,
-          body: message,
-          data: { type, actionUrl: config.actionUrl },
-        });
+        if (pushQueue) {
+          await pushQueue.add('sendPush', {
+            token: pref.pushToken,
+            title,
+            body: message,
+            data: { type, actionUrl: config.actionUrl },
+          });
+        }
       } catch (err) {
         console.error('Failed to add push job to queue:', err);
       }
@@ -70,10 +74,12 @@ export const notificationService = {
     if (pref.channels.sms && pref.categories[config.category as keyof typeof pref.categories].sms) {
       try {
         const smsText = Handlebars.compile(config.smsTemplate)(data);
-        await smsQueue.add('sendSMS', {
-          to: user.phone,
-          text: smsText
-        });
+        if (smsQueue) {
+          await smsQueue.add('sendSMS', {
+            to: user.phone,
+            text: smsText
+          });
+        }
       } catch (err) {
         console.error('Failed to add sms job to queue:', err);
       }

@@ -9,7 +9,7 @@ if (REDIS_URL) {
     const cleanUrl = REDIS_URL.split(' ')[0];
     redis = new Redis(cleanUrl, {
       maxRetriesPerRequest: null,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       retryStrategy(times) {
         const delay = Math.min(times * 50, 2000);
         if (times > 5) {
