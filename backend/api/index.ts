@@ -3,7 +3,7 @@ import { createServer } from "http";
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 import cron from "node-cron";
-import app from "../server/app";
+import app from "../server/app.js";
 import { setIo } from "../server/utils/socketEmitter";
 import { setupCronJobs } from "../server/jobs/bookingJobs";
 import { cleanupExpiredLocks } from "../server/services/paymentService";
