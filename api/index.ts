@@ -11,6 +11,7 @@ import { User, Message, Conversation, Notification as NotificationModel } from "
 import jwt from "jsonwebtoken";
 import { createServer as createViteServer } from "vite";
 import path from "path";
+import express from "express";
 
 // Handle Uncaught Exceptions
 process.on("uncaughtException", (err) => {
@@ -31,13 +32,19 @@ if (!MONGODB_URI || !JWT_SECRET) {
 let httpServer: ReturnType<typeof createServer>;
 
 async function startServer() {
-  // Vite middleware for development
+  // Vite middleware for development or static serving for production
   if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
+  } else if (!process.env.VERCEL) {
+    const distPath = path.join(process.cwd(), "dist");
+    app.use(express.static(distPath));
+    app.get("*", (req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
   }
 
   httpServer = createServer(app);
@@ -151,7 +158,7 @@ async function startServer() {
 
   if (!process.env.VERCEL) {
     httpServer.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
+      console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
     });
   }
 }
