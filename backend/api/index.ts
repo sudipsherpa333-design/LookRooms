@@ -37,11 +37,11 @@ async function startServer() {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
-      root: path.join(process.cwd(), "frontend"),
+      root: path.join(process.cwd(), "../frontend"),
     });
     app.use(vite.middlewares);
   } else if (!process.env.VERCEL) {
-    const distPath = path.join(process.cwd(), "frontend/dist");
+    const distPath = path.join(process.cwd(), "../frontend/dist");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
