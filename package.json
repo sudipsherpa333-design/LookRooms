@@ -4,12 +4,12 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx api/index.ts",
-    "start": "tsx api/index.ts",
-    "build": "vite build",
-    "preview": "vite preview",
-    "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "dev": "tsx backend/api/index.ts",
+    "start": "tsx backend/api/index.ts",
+    "build": "vite build frontend",
+    "preview": "vite preview frontend",
+    "clean": "rm -rf frontend/dist",
+    "lint": "tsc --noEmit -p frontend/tsconfig.json"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.78.0",

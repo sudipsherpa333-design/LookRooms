@@ -3,6 +3,8 @@ import Redis from 'ioredis';
 const REDIS_URL = process.env.REDIS_URL;
 let redis: any = null;
 
+// Redis is disabled for now to prevent connection errors in environments without Redis.
+/*
 if (REDIS_URL) {
   try {
     // Clean up the URL if it contains extra characters
@@ -27,6 +29,7 @@ if (REDIS_URL) {
 } else {
   console.log('REDIS_URL not provided, rate limiting will use memory store.');
 }
+*/
 
 export default redis;
 
