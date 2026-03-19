@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsx backend/api/index.ts",
     "start": "tsx backend/api/index.ts",
-    "build": "vite build frontend --config frontend/vite.config.ts",
+    "build": "cd frontend && vite build",
     "preview": "vite preview frontend",
     "clean": "rm -rf frontend/dist",
     "lint": "tsc --noEmit -p frontend/tsconfig.json"
