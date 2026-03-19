@@ -33,7 +33,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 app.use(cors({
-  origin: process.env.APP_URL || "*",
+  origin: process.env.FRONTEND_URL || process.env.APP_URL || "*",
   credentials: true
 }));
 app.use(mongoSanitize());
@@ -80,14 +80,6 @@ app.use("/api", apiV1);
 app.use("/api", (req, res) => {
   res.status(404).json({ success: false, message: "API endpoint not found" });
 });
-
-// Static files (Production)
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../dist")));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../dist/index.html"));
-  });
-}
 
 // Global Error Handler
 app.use(errorHandler);

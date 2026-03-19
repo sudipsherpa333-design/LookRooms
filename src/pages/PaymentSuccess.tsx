@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { CheckCircle, FileText } from "lucide-react";
+import axiosInstance from "../api/axiosInstance";
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -10,10 +11,9 @@ export default function PaymentSuccess() {
 
   useEffect(() => {
     if (transactionId) {
-      fetch(`/api/payments/status/${transactionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setPayment(data);
+      axiosInstance.get(`/payments/status/${transactionId}`)
+        .then((res) => {
+          setPayment(res.data);
           setLoading(false);
         })
         .catch((err) => {

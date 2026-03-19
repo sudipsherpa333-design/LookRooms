@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import axiosInstance from '../api/axiosInstance';
 import { CheckCircle2, XCircle, Loader2, ArrowLeft, MessageSquare, Download } from 'lucide-react';
 import { motion } from 'framer-motion';
 import RetryPaymentButton from '../components/Payment/RetryPaymentButton';
@@ -22,27 +23,16 @@ export default function PaymentStatusPage() {
       }
 
       try {
-        const res = await fetch('/api/payment/verify', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({ gateway, pidx, data })
-        });
-        const result = await res.json();
-        if (result.success) {
+        const res = await axiosInstance.post('/payment/verify', { gateway, pidx, data });
+        if (res.data.success) {
           setStatus('success');
-          setPaymentData(result);
+          setPaymentData(res.data);
         } else {
           setStatus('failed');
           // Fetch payment details to show retry button
-          const historyRes = await fetch('/api/payment/history?limit=1', {
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          });
-          const history = await historyRes.json();
-          if (history.payments?.[0]) {
-            setPaymentData(history.payments[0]);
+          const historyRes = await axiosInstance.get('/payment/history?limit=1');
+          if (historyRes.data.payments?.[0]) {
+            setPaymentData(historyRes.data.payments[0]);
           }
         }
       } catch (error) {

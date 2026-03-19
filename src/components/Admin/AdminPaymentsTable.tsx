@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Download, Filter, Search, RefreshCw, AlertCircle, CheckCircle, XCircle, Clock, MoreVertical } from 'lucide-react';
 import AdminRefundForm from './AdminRefundForm';
+import axiosInstance from '../../api/axiosInstance';
 
 export default function AdminPaymentsTable() {
   const [payments, setPayments] = useState<any[]>([]);
@@ -18,13 +19,12 @@ export default function AdminPaymentsTable() {
         gateway: filters.gateway,
         page: filters.page.toString()
       });
-      const res = await fetch(`/api/admin/payment/all?${query}`, {
+      const res = await axiosInstance.get(`/admin/payment/all?${query}`, {
         headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'x-user-id': JSON.parse(localStorage.getItem('user') || '{}').id
         }
       });
-      const data = await res.json();
+      const data = res.data;
       setPayments(data.payments || []);
       setTotalPages(data.pages || 1);
     } catch (error) {

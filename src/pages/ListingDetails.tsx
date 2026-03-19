@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import axiosInstance from "../api/axiosInstance";
 import {
   MapPin,
   Droplets,
@@ -46,22 +47,16 @@ export default function ListingDetails() {
   useEffect(() => {
     const fetchListing = async () => {
       try {
-        const res = await fetch(`/api/listings/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setListing(data);
-          
-          // Log view
-          if (user) {
-            fetch("/api/user/viewed", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                "x-user-id": user.id || user._id || "",
-              },
-              body: JSON.stringify({ listingId: id }),
-            }).catch(console.error);
-          }
+        const { data } = await axiosInstance.get(`/listings/${id}`);
+        setListing(data);
+        
+        // Log view
+        if (user) {
+          axiosInstance.post("/user/viewed", { listingId: id }, {
+            headers: {
+              "x-user-id": user.id || user._id || "",
+            }
+          }).catch(console.error);
         }
       } catch (error) {
         console.error("Failed to fetch listing:", error);
@@ -73,15 +68,12 @@ export default function ListingDetails() {
     const checkApplicationStatus = async () => {
       if (!user) return;
       try {
-        const res = await fetch(`/api/user/applications/${id}/check`, {
+        const { data } = await axiosInstance.get(`/user/applications/${id}/check`, {
           headers: {
             "x-user-id": user.id || user._id || "",
           }
         });
-        if (res.ok) {
-          const data = await res.json();
-          setApplied(data.applied);
-        }
+        setApplied(data.applied);
       } catch (error) {
         console.error("Failed to check application status:", error);
       }
@@ -89,11 +81,8 @@ export default function ListingDetails() {
 
     const fetchReviews = async () => {
       try {
-        const res = await fetch(`/api/reviews/listing/${id}`);
-        if (res.ok) {
-          const data = await res.json();
-          setReviews(data);
-        }
+        const { data } = await axiosInstance.get(`/reviews/listing/${id}`);
+        setReviews(data);
       } catch (error) {
         console.error("Failed to fetch reviews:", error);
       }
@@ -118,69 +107,44 @@ export default function ListingDetails() {
     setInitiatingPayment(true);
     try {
       // 1. Create Booking Request first (locks listing and gets feePaymentId)
-      const bookingRes = await fetch("/api/booking-requests", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          listingId: id,
-          moveInDate,
-          stayDuration: "6 months", // Default or from state
-          occupants: 1, // Default or from state
-          idempotencyKey: `book_${id}_${user.id || user._id}_${Date.now()}`,
-        }),
+      const { data: bookingData } = await axiosInstance.post("/booking-requests", {
+        listingId: id,
+        moveInDate,
+        stayDuration: "6 months", // Default or from state
+        occupants: 1, // Default or from state
+        idempotencyKey: `book_${id}_${user.id || user._id}_${Date.now()}`,
       });
-
-      const bookingData = await bookingRes.json();
-      if (!bookingRes.ok) {
-        alert(bookingData.error || "Failed to create booking request");
-        return;
-      }
 
       const { feePaymentId } = bookingData;
 
       // 2. Initiate Payment with the feePaymentId
-      const res = await fetch("/api/payment/initiate", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({
-          feePaymentId,
-          paymentMethod: gateway,
-        }),
+      const { data } = await axiosInstance.post("/payment/initiate", {
+        feePaymentId,
+        paymentMethod: gateway,
       });
       
-      const data = await res.json();
-      if (res.ok) {
-        if (gateway === 'khalti') {
-          window.location.href = data.payment_url;
-        } else if (gateway === 'esewa') {
-          // Create a form and submit it
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = data.url;
-          
-          Object.entries(data.formData).forEach(([key, value]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = key;
-            input.value = value as string;
-            form.appendChild(input);
-          });
-          
-          document.body.appendChild(form);
-          form.submit();
-        }
-      } else {
-        alert(data.error || "Failed to initiate payment");
+      if (gateway === 'khalti') {
+        window.location.href = data.payment_url;
+      } else if (gateway === 'esewa') {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.url;
+        
+        Object.entries(data.formData).forEach(([key, value]) => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = value as string;
+          form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Payment initiation failed:", error);
-      alert("Something went wrong. Please try again.");
+      alert(error.response?.data?.error || "Something went wrong. Please try again.");
     } finally {
       setInitiatingPayment(false);
     }
@@ -201,17 +165,14 @@ export default function ListingDetails() {
       
       // Log contact
       try {
-        await fetch("/api/user/contact-log", {
-          method: "POST",
+        await axiosInstance.post("/user/contact-log", {
+          ownerId: listing.homeowner?._id || listing.homeowner || listing.landlordId,
+          listingId: listing._id || listing.id,
+          contactMethod: "whatsapp",
+        }, {
           headers: {
-            "Content-Type": "application/json",
             "x-user-id": user.id || user._id || "",
-          },
-          body: JSON.stringify({
-            ownerId: listing.homeowner?._id || listing.homeowner || listing.landlordId,
-            listingId: listing._id || listing.id,
-            contactMethod: "whatsapp",
-          }),
+          }
         });
       } catch (e) {
         console.error("Failed to log contact", e);
@@ -228,22 +189,16 @@ export default function ListingDetails() {
     setMessaging(true);
     try {
       const participantId = listing.homeowner?._id || listing.homeowner || listing.landlordId;
-      const res = await fetch(`/api/conversations`, {
-        method: "POST",
+      const { data: chat } = await axiosInstance.post(`/conversations`, {
+        seekerId: user.id || user._id,
+        ownerId: participantId,
+        roomId: listing._id
+      }, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user.id || user._id || "",
-        },
-        body: JSON.stringify({
-          seekerId: user.id || user._id,
-          ownerId: participantId,
-          roomId: listing._id
-        })
+        }
       });
-      if (res.ok) {
-        const chat = await res.json();
-        navigate(`/chat?id=${chat._id}&shareListing=${listing._id}`);
-      }
+      navigate(`/chat?id=${chat._id}&shareListing=${listing._id}`);
     } catch (error) {
       console.error("Failed to start chat:", error);
     } finally {

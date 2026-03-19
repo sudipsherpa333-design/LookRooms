@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { toast } from 'react-hot-toast';
+import axiosInstance from '../api/axiosInstance';
 
 export const useNotifications = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -8,7 +9,8 @@ export const useNotifications = () => {
   const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
-    const newSocket = io(window.location.origin);
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const newSocket = io(backendUrl);
     setSocket(newSocket);
 
     newSocket.on('notification', (notif: any) => {
@@ -26,9 +28,13 @@ export const useNotifications = () => {
   }, []);
 
   const markRead = async (id: string) => {
-    await fetch(`/api/v1/notifications/read/${id}`, { method: 'PUT' });
-    setNotifications(prev => prev.map(n => n._id === id ? { ...n, 'channels.inApp.read': true } : n));
-    setUnreadCount(prev => Math.max(0, prev - 1));
+    try {
+      await axiosInstance.put(`/notifications/read/${id}`);
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, 'channels.inApp.read': true } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
   };
 
   return { notifications, unreadCount, markRead };

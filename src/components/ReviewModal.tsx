@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Star } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import axiosInstance from '../api/axiosInstance';
 
 export const ReviewModal = ({ bookingId, onClose, onSubmitSuccess }: any) => {
   const { user } = useAuth();
@@ -42,23 +43,15 @@ export const ReviewModal = ({ bookingId, onClose, onSubmitSuccess }: any) => {
         };
       }
 
-      const res = await fetch('/api/reviews/submit', {
-        method: 'POST',
+      await axiosInstance.post('/reviews/submit', payload, {
         headers: {
-          'Content-Type': 'application/json',
           'x-user-id': user?.id || user?._id || '',
         },
-        body: JSON.stringify(payload),
       });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to submit review');
-      }
 
       onSubmitSuccess();
     } catch (err: any) {
-      setError(err.message);
+      setError(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }

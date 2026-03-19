@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import axiosInstance from '../../api/axiosInstance';
 import { Building2, FileText, MapPin, Phone, UserCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,26 +28,15 @@ const AgentRegistration = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch('/api/v1/agent/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+      const res = await axiosInstance.post('/agent/register', formData);
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         await refreshUser();
         navigate('/agent/dashboard');
-      } else {
-        const data = await res.json();
-        alert(data.error || 'Registration failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error registering agent:', error);
-      alert('An error occurred during registration.');
+      alert(error.response?.data?.error || 'An error occurred during registration.');
     }
   };
 

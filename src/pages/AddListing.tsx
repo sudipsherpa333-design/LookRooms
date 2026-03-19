@@ -15,6 +15,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../context/AuthContext";
 
 const STEPS = [
@@ -221,24 +222,11 @@ export default function AddListing() {
     };
 
     try {
-      const res = await fetch("/api/homeowner/listings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id || user._id || "",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        setSuccess(true);
-        setTimeout(() => navigate(`/dashboard`), 2000);
-      } else {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.details || errorData.error || "Failed to create listing");
-      }
+      const res = await axiosInstance.post("/homeowner/listings", payload);
+      setSuccess(true);
+      setTimeout(() => navigate(`/dashboard`), 2000);
     } catch (err: any) {
-      setError(err.message || "An error occurred");
+      setError(err.response?.data?.details || err.response?.data?.error || err.message || "An error occurred");
     } finally {
       setLoading(false);
     }

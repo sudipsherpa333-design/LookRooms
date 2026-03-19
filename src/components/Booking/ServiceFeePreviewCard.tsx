@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance';
 
 interface FeePreview {
   roomType: string;
@@ -19,7 +19,7 @@ export const ServiceFeePreviewCard: React.FC<{ listingId: string }> = ({ listing
   const [preview, setPreview] = useState<FeePreview | null>(null);
 
   useEffect(() => {
-    axios.get(`/api/fee/preview/${listingId}`).then(res => setPreview(res.data));
+    axiosInstance.get(`/fee/preview/${listingId}`).then(res => setPreview(res.data));
   }, [listingId]);
 
   if (!preview) return null;

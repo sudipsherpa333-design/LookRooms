@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import axiosInstance from "../api/axiosInstance";
 import {
   MapPin,
   Droplets,
@@ -226,10 +227,8 @@ export default function Home() {
         }
       });
 
-      const res = await fetch(`/api/search/advanced?${queryParams.toString()}`);
-      if (!res.ok) throw new Error("Failed to fetch listings");
-      const data = await res.json();
-      return data.listings || [];
+      const res = await axiosInstance.get(`/search/advanced?${queryParams.toString()}`);
+      return res.data.listings || [];
     },
   });
 
@@ -247,10 +246,7 @@ export default function Home() {
   const handleSwipeRight = async (id: string) => {
     if (user) {
       try {
-        await fetch(`/api/user/favorites/${id}`, {
-          method: "POST",
-          headers: { "x-user-id": user.id || user._id || "" },
-        });
+        await axiosInstance.post(`/user/favorites/${id}`);
       } catch (error) {
         console.error("Failed to save favorite:", error);
       }

@@ -3,6 +3,7 @@ import { useChatContext } from "../context/ChatContext";
 import { useAuth } from "../context/AuthContext";
 import { encryptMessage } from "../utils/encryption";
 import { useSocketContext } from "../context/SocketContext";
+import axiosInstance from "../api/axiosInstance";
 
 export const useChat = () => {
   const { state, dispatch } = useChatContext();
@@ -13,11 +14,11 @@ export const useChat = () => {
   const fetchConversations = async () => {
     if (!user) return;
     try {
-      const res = await fetch("/api/conversations", {
+      const res = await axiosInstance.get("/conversations", {
         headers: { "x-user-id": user.id || user._id || "" },
       });
-      if (res.ok) {
-        const data = await res.json();
+      if (res.status === 200) {
+        const data = res.data;
         const userId = user.id || user._id || "";
         dispatch({ type: "SET_CONVERSATIONS", payload: data, userId });
         
@@ -37,11 +38,11 @@ export const useChat = () => {
     if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/messages/${conversationId}?page=${page}&limit=20`, {
+      const res = await axiosInstance.get(`/messages/${conversationId}?page=${page}&limit=20`, {
         headers: { "x-user-id": user.id || user._id || "" },
       });
-      if (res.ok) {
-        const data = await res.json();
+      if (res.status === 200) {
+        const data = res.data;
         dispatch({ type: "SET_MESSAGES", payload: data });
         socket?.emit("markRead", { conversationId });
       }
@@ -94,8 +95,7 @@ export const useChat = () => {
   const markAsRead = async (conversationId: string) => {
     if (!user) return;
     try {
-      await fetch(`/api/messages/read/${conversationId}`, {
-        method: "PUT",
+      await axiosInstance.put(`/messages/read/${conversationId}`, {}, {
         headers: { "x-user-id": user.id || user._id || "" },
       });
       dispatch({ type: "MARK_READ", payload: { conversationId, userId: user.id || user._id || "" } });

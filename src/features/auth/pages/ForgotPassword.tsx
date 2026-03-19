@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Map as MapIcon, Mail, Phone, ArrowLeft, CheckCircle2, AlertCircle, ShieldCheck, Lock } from "lucide-react";
 import OTPInput from "../../../components/auth/OTPInput";
 import { motion, AnimatePresence } from "framer-motion";
+import axiosInstance from "../../../api/axiosInstance";
 
 type Channel = 'email' | 'phone';
 type Step = 1 | 2 | 3;
@@ -39,22 +40,12 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/forgot-password/send-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, channel }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setStep(2);
-        setSuccess(data.message);
-        setResendTimer(60);
-      } else {
-        setError(data.error || "Failed to send OTP");
-      }
-    } catch (err) {
-      setError("Connection error. Please try again.");
+      const res = await axiosInstance.post("/auth/forgot-password/send-otp", { identifier, channel });
+      setStep(2);
+      setSuccess(res.data.message);
+      setResendTimer(60);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to send OTP");
     } finally {
       setLoading(false);
     }
@@ -68,22 +59,12 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/forgot-password/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, otp, channel }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setResetToken(data.resetToken);
-        setStep(3);
-        setSuccess("OTP verified! Now set your new password.");
-      } else {
-        setError(data.error || "Invalid OTP");
-      }
-    } catch (err) {
-      setError("Connection error. Please try again.");
+      const res = await axiosInstance.post("/auth/forgot-password/verify-otp", { identifier, otp, channel });
+      setResetToken(res.data.resetToken);
+      setStep(3);
+      setSuccess("OTP verified! Now set your new password.");
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Invalid OTP");
     } finally {
       setLoading(false);
     }
@@ -98,21 +79,11 @@ export default function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch("/api/auth/forgot-password/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ resetToken, newPassword }),
-      });
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccess("Password reset successful!");
-        setTimeout(() => navigate("/login"), 2000);
-      } else {
-        setError(data.error || "Failed to reset password");
-      }
-    } catch (err) {
-      setError("Connection error. Please try again.");
+      const res = await axiosInstance.post("/auth/forgot-password/reset", { resetToken, newPassword });
+      setSuccess("Password reset successful!");
+      setTimeout(() => navigate("/login"), 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to reset password");
     } finally {
       setLoading(false);
     }
@@ -124,20 +95,11 @@ export default function ForgotPassword() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/forgot-password/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, channel }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setSuccess("OTP resent successfully");
-        setResendTimer(60);
-      } else {
-        setError(data.error || "Failed to resend OTP");
-      }
-    } catch (err) {
-      setError("Connection error");
+      const res = await axiosInstance.post("/auth/forgot-password/resend-otp", { identifier, channel });
+      setSuccess("OTP resent successfully");
+      setResendTimer(60);
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Failed to resend OTP");
     } finally {
       setLoading(false);
     }

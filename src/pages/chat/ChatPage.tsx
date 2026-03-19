@@ -4,7 +4,7 @@ import { useChatContext } from '../../context/ChatContext';
 import { useAuth } from '../../context/AuthContext';
 import { useSocketContext } from '../../context/SocketContext';
 import { Send, Image as ImageIcon, Paperclip, MoreVertical, Phone, Video } from 'lucide-react';
-import axios from 'axios';
+import axiosInstance from '../../api/axiosInstance';
 
 export default function ChatPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -65,7 +65,7 @@ export default function ChatPage() {
     formData.append('file', file);
 
     try {
-      const { data } = await axios.post('/api/v1/messages/upload', formData, {
+      const { data } = await axiosInstance.post('/messages/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

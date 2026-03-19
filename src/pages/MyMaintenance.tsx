@@ -13,6 +13,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import Modal from "../components/ui/Modal";
+import axiosInstance from "../api/axiosInstance";
 
 export default function MyMaintenance() {
   const [requests, setRequests] = useState<any[]>([]);
@@ -37,13 +38,10 @@ export default function MyMaintenance() {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch("/api/user/maintenance", {
+      const res = await axiosInstance.get("/user/maintenance", {
         headers: { "x-user-id": user?.id || user?._id || "" }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setRequests(data);
-      }
+      setRequests(res.data);
     } catch (error) {
       toast.error("Failed to fetch requests");
     } finally {
@@ -53,14 +51,11 @@ export default function MyMaintenance() {
 
   const fetchMyListings = async () => {
     try {
-      const res = await fetch("/api/user/applications", {
+      const res = await axiosInstance.get("/user/applications", {
         headers: { "x-user-id": user?.id || user?._id || "" }
       });
-      if (res.ok) {
-        const data = await res.json();
-        // Only show listings where application is accepted or completed
-        setApplications(data.filter((app: any) => app.status === 'accepted' || app.status === 'completed'));
-      }
+      // Only show listings where application is accepted or completed
+      setApplications(res.data.filter((app: any) => app.status === 'accepted' || app.status === 'completed'));
     } catch (error) {
       console.error("Failed to fetch applications");
     }
@@ -74,16 +69,13 @@ export default function MyMaintenance() {
     }
 
     try {
-      const res = await fetch("/api/user/maintenance", {
-        method: "POST",
+      const res = await axiosInstance.post("/user/maintenance", formData, {
         headers: { 
-          "Content-Type": "application/json",
           "x-user-id": user?.id || user?._id || "" 
-        },
-        body: JSON.stringify(formData)
+        }
       });
 
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         toast.success("Request submitted successfully");
         setShowAddModal(false);
         setFormData({

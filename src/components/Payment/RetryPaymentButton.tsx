@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RotateCcw, Clock, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import axiosInstance from '../../api/axiosInstance';
 
 interface RetryPaymentButtonProps {
   paymentId: string;
@@ -36,21 +37,15 @@ export default function RetryPaymentButton({ paymentId, retryExpiry, retryCount,
   const handleRetry = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/payment/retry/${paymentId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      const data = await res.json();
+      const { data } = await axiosInstance.post(`/payment/retry/${paymentId}`);
       if (data.success) {
         onRetrySuccess(data);
       } else {
         alert(data.error || 'Retry failed');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Retry Error:', error);
+      alert(error.response?.data?.error || 'Retry failed');
     } finally {
       setLoading(false);
     }

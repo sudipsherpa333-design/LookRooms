@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from "recharts";
+import axiosInstance from "../api/axiosInstance";
 import {
   Home,
   Eye,
@@ -48,36 +49,16 @@ export default function Dashboard() {
       if (!user) return;
       try {
         const [listingsRes, statsRes, viewedRes, appsRes] = await Promise.all([
-          fetch(`/api/homeowner/listings`, {
-            headers: { "x-user-id": user.id || user._id || "" },
-          }),
-          fetch(`/api/homeowner/dashboard/overview`, {
-            headers: { "x-user-id": user.id || user._id || "" },
-          }),
-          fetch(`/api/user/viewed`, {
-            headers: { "x-user-id": user.id || user._id || "" },
-          }),
-          fetch(`/api/user/applications`, {
-            headers: { "x-user-id": user.id || user._id || "" },
-          }),
+          axiosInstance.get("/homeowner/listings"),
+          axiosInstance.get("/homeowner/dashboard/overview"),
+          axiosInstance.get("/user/viewed"),
+          axiosInstance.get("/user/applications"),
         ]);
 
-        if (listingsRes.ok) {
-          const data = await listingsRes.json();
-          setListings(Array.isArray(data) ? data : []);
-        }
-        if (statsRes.ok) {
-          const data = await statsRes.json();
-          setStats(data);
-        }
-        if (viewedRes.ok) {
-          const data = await viewedRes.json();
-          setRecentlyViewed(Array.isArray(data) ? data : []);
-        }
-        if (appsRes.ok) {
-          const data = await appsRes.json();
-          setUserApplications(Array.isArray(data) ? data : []);
-        }
+        setListings(Array.isArray(listingsRes.data) ? listingsRes.data : []);
+        setStats(statsRes.data);
+        setRecentlyViewed(Array.isArray(viewedRes.data) ? viewedRes.data : []);
+        setUserApplications(Array.isArray(appsRes.data) ? appsRes.data : []);
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
       } finally {
@@ -136,19 +117,12 @@ export default function Dashboard() {
     }
     setKycSubmitting(true);
     try {
-      const res = await fetch("/api/user/kyc/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id || user._id || "",
-        },
-        body: JSON.stringify({
-          documentType: kycDocType,
-          documentUrl: kycDocumentUrl,
-          idNumber: kycIdNumber,
-        }),
+      const res = await axiosInstance.post("/user/kyc/submit", {
+        documentType: kycDocType,
+        documentUrl: kycDocumentUrl,
+        idNumber: kycIdNumber,
       });
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         if (refreshUser) await refreshUser();
       }
     } catch (error) {

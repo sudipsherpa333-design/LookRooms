@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../api/axiosInstance';
 import { MessageSquare, Clock, CheckCircle, AlertCircle, Send, User, Search, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,14 +19,12 @@ export default function AdminSupportDashboard() {
         category: filters.category,
         page: filters.page.toString()
       });
-      const res = await fetch(`/api/support/admin/tickets?${query}`, {
+      const res = await axiosInstance.get(`/support/admin/tickets?${query}`, {
         headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'x-user-id': JSON.parse(localStorage.getItem('user') || '{}').id
         }
       });
-      const data = await res.json();
-      setTickets(data.tickets || []);
+      setTickets(res.data.tickets || []);
     } catch (error) {
       console.error(error);
     } finally {
@@ -41,16 +40,12 @@ export default function AdminSupportDashboard() {
     if (!reply.trim()) return;
     setSending(true);
     try {
-      const res = await fetch(`/api/support/admin/tickets/${selectedTicket._id}/reply`, {
-        method: 'PUT',
+      const res = await axiosInstance.put(`/support/admin/tickets/${selectedTicket._id}/reply`, { reply }, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'x-user-id': JSON.parse(localStorage.getItem('user') || '{}').id
-        },
-        body: JSON.stringify({ reply })
+        }
       });
-      if (res.ok) {
+      if (res.status === 200) {
         setReply('');
         fetchTickets();
         setSelectedTicket(null);
@@ -141,14 +136,10 @@ export default function AdminSupportDashboard() {
                     value={selectedTicket.status}
                     onChange={async (e) => {
                       const newStatus = e.target.value;
-                      await fetch(`/api/support/admin/tickets/${selectedTicket._id}/status`, {
-                        method: 'PUT',
+                      await axiosInstance.put(`/support/admin/tickets/${selectedTicket._id}/status`, { status: newStatus }, {
                         headers: {
-                          'Content-Type': 'application/json',
-                          'Authorization': `Bearer ${localStorage.getItem('token')}`,
                           'x-user-id': JSON.parse(localStorage.getItem('user') || '{}').id
-                        },
-                        body: JSON.stringify({ status: newStatus })
+                        }
                       });
                       fetchTickets();
                     }}

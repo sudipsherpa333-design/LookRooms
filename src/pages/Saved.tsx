@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Heart, MapPin } from "lucide-react";
+import axiosInstance from "../api/axiosInstance";
 
 import { useAuth } from "../context/AuthContext";
 
@@ -16,13 +17,8 @@ export default function SavedListings() {
         return;
       }
       try {
-        const res = await fetch("/api/user/favorites", {
-          headers: { "x-user-id": user.id || user._id || "" },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setListings(Array.isArray(data) ? data : []);
-        }
+        const res = await axiosInstance.get("/user/favorites");
+        setListings(Array.isArray(res.data) ? res.data : []);
       } catch (error) {
         console.error("Failed to fetch listings:", error);
       } finally {

@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import axiosInstance from '../api/axiosInstance';
 
 export const NotificationPreferencesPage = () => {
   const [preferences, setPreferences] = useState<any>(null);
 
   useEffect(() => {
-    fetch('/api/v1/notifications/preferences')
-      .then(res => res.json())
-      .then(data => setPreferences(data));
+    axiosInstance.get('/notifications/preferences')
+      .then(res => setPreferences(res.data));
   }, []);
 
   const updatePreference = async (channel: string, enabled: boolean) => {
     const newPrefs = { ...preferences, channels: { ...preferences.channels, [channel]: enabled } };
     setPreferences(newPrefs);
-    await fetch('/api/v1/notifications/preferences', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newPrefs)
-    });
+    await axiosInstance.put('/notifications/preferences', newPrefs);
   };
 
   if (!preferences) return <div>Loading...</div>;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
+import axiosInstance from "../api/axiosInstance";
 import {
   Users,
   Home,
@@ -95,29 +96,28 @@ export default function AdminDashboard() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const headers = { "x-user-id": user?.id || user?._id || "" };
       const [statsRes, listingsRes, kycRes, usersRes, allListingsRes, paymentsRes, bookingsRes, chatLogsRes, supportTicketsRes, settingsRes] = await Promise.all([
-        fetch("/api/admin/analytics/overview", { headers }),
-        fetch("/api/admin/listings/pending", { headers }),
-        fetch("/api/admin/users/verification-requests", { headers }),
-        fetch("/api/admin/users", { headers }),
-        fetch("/api/listings?status=all", { headers }),
-        fetch("/api/admin/payments", { headers }),
-        fetch("/api/admin/bookings", { headers }),
-        fetch("/api/admin/chat-logs", { headers }),
-        fetch("/api/support/admin/tickets", { headers }),
-        fetch("/api/admin/settings", { headers }),
+        axiosInstance.get("/admin/analytics/overview"),
+        axiosInstance.get("/admin/listings/pending"),
+        axiosInstance.get("/admin/users/verification-requests"),
+        axiosInstance.get("/admin/users"),
+        axiosInstance.get("/listings?status=all"),
+        axiosInstance.get("/admin/payments"),
+        axiosInstance.get("/admin/bookings"),
+        axiosInstance.get("/admin/chat-logs"),
+        axiosInstance.get("/support/admin/tickets"),
+        axiosInstance.get("/admin/settings"),
       ]);
-      const statsData = await statsRes.json();
-      const listingsData = await listingsRes.json();
-      const kycData = await kycRes.json();
-      const usersData = await usersRes.json();
-      const allListingsData = await allListingsRes.json();
-      const paymentsData = await paymentsRes.json();
-      const bookingsData = await bookingsRes.json();
-      const chatLogsData = await chatLogsRes.json();
-      const supportTicketsData = await supportTicketsRes.json();
-      const settingsData = await settingsRes.json();
+      const statsData = statsRes.data;
+      const listingsData = listingsRes.data;
+      const kycData = kycRes.data;
+      const usersData = usersRes.data;
+      const allListingsData = allListingsRes.data;
+      const paymentsData = paymentsRes.data;
+      const bookingsData = bookingsRes.data;
+      const chatLogsData = chatLogsRes.data;
+      const supportTicketsData = supportTicketsRes.data;
+      const settingsData = settingsRes.data;
 
       setStats(statsData);
       setPendingListings(Array.isArray(listingsData) ? listingsData : []);
@@ -144,13 +144,8 @@ export default function AdminDashboard() {
   ) => {
     try {
       const endpoint = status === "active" ? "approve" : "reject";
-      await fetch(`/api/admin/listings/${id}/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ reason: "Admin decision" }),
+      await axiosInstance.post(`/admin/listings/${id}/${endpoint}`, {
+        reason: "Admin decision",
       });
       fetchData(); // Refresh data
     } catch (error) {
@@ -165,13 +160,8 @@ export default function AdminDashboard() {
     try {
       const endpoint =
         status === "verified" ? "verify-documents" : "reject-documents";
-      await fetch(`/api/admin/users/${id}/${endpoint}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ reason: "Admin decision" }),
+      await axiosInstance.post(`/admin/users/${id}/${endpoint}`, {
+        reason: "Admin decision",
       });
       fetchData(); // Refresh data
     } catch (error) {
@@ -185,15 +175,10 @@ export default function AdminDashboard() {
     
     setBatchActionLoading(true);
     try {
-      const res = await fetch("/api/admin/users/batch-verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ userIds: selectedKyc }),
+      const res = await axiosInstance.post("/admin/users/batch-verify", {
+        userIds: selectedKyc,
       });
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         setSelectedKyc([]);
         fetchData();
       }
@@ -221,12 +206,7 @@ export default function AdminDashboard() {
   const handleDeleteListing = async (id: string) => {
     if (!window.confirm("Are you sure you want to delete this listing?")) return;
     try {
-      await fetch(`/api/admin/listings/${id}`, {
-        method: "DELETE",
-        headers: {
-          "x-user-id": user?.id || user?._id || "",
-        },
-      });
+      await axiosInstance.delete(`/admin/listings/${id}`);
       fetchData();
     } catch (error) {
       console.error("Failed to delete listing", error);
@@ -246,24 +226,18 @@ export default function AdminDashboard() {
   const handleUpdateRole = async (userId: string, newRole: string) => {
     setUpdatingUser(userId);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/role`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ role: newRole }),
+      const res = await axiosInstance.post(`/admin/users/${userId}/role`, {
+        role: newRole,
       });
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         toast.success("Role updated successfully");
         fetchData();
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to update role");
+        toast.error(res.data.error || "Failed to update role");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update role", error);
-      toast.error("An error occurred while updating role");
+      toast.error(error.response?.data?.error || "An error occurred while updating role");
     } finally {
       setUpdatingUser(null);
     }
@@ -272,24 +246,18 @@ export default function AdminDashboard() {
   const handleUpdateStatus = async (userId: string, newStatus: string) => {
     setUpdatingUser(userId);
     try {
-      const res = await fetch(`/api/admin/users/${userId}/status`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ status: newStatus }),
+      const res = await axiosInstance.post(`/admin/users/${userId}/status`, {
+        status: newStatus,
       });
-      if (res.ok) {
+      if (res.status === 200 || res.status === 201) {
         toast.success("Account status updated");
         fetchData();
       } else {
-        const data = await res.json();
-        toast.error(data.error || "Failed to update status");
+        toast.error(res.data.error || "Failed to update status");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to update status", error);
-      toast.error("An error occurred while updating status");
+      toast.error(error.response?.data?.error || "An error occurred while updating status");
     } finally {
       setUpdatingUser(null);
     }
@@ -1006,15 +974,8 @@ export default function AdminDashboard() {
                 <button
                   onClick={async () => {
                     try {
-                      const res = await fetch("/api/admin/settings", {
-                        method: "PUT",
-                        headers: {
-                          "Content-Type": "application/json",
-                          "x-user-id": user?.id || user?._id || ""
-                        },
-                        body: JSON.stringify(systemSettings)
-                      });
-                      if (res.ok) alert("Settings updated successfully");
+                      const res = await axiosInstance.put("/admin/settings", systemSettings);
+                      if (res.status === 200 || res.status === 201) alert("Settings updated successfully");
                       else alert("Failed to update settings");
                     } catch (e) {
                       alert("Error updating settings");

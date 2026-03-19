@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import axiosInstance from '../../api/axiosInstance';
 
 interface AdminRefundFormProps {
   payment: any;
@@ -18,16 +19,12 @@ export default function AdminRefundForm({ payment, onClose, onRefundSuccess }: A
 
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/payment/refund/${payment._id}`, {
-        method: 'POST',
+      const res = await axiosInstance.post(`/admin/payment/refund/${payment._id}`, { reason }, {
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'x-user-id': JSON.parse(localStorage.getItem('user') || '{}').id
-        },
-        body: JSON.stringify({ reason })
+        }
       });
-      const data = await res.json();
+      const data = res.data;
       if (data.success) {
         onRefundSuccess();
       } else {

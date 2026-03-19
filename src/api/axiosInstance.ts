@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || `${window.location.origin}/api/v1`;
 
 const axiosInstance = axios.create({
   baseURL: API_URL,
@@ -14,7 +14,7 @@ const axiosInstance = axios.create({
 // Request interceptor for adding tokens
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('krf_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

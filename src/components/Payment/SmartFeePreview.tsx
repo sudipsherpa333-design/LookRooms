@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Info } from 'lucide-react';
 import { motion } from 'framer-motion';
+import axiosInstance from '../../api/axiosInstance';
 
 interface SmartFeePreviewProps {
   listingId: string;
@@ -13,8 +14,7 @@ export default function SmartFeePreview({ listingId }: SmartFeePreviewProps) {
   useEffect(() => {
     const fetchFee = async () => {
       try {
-        const res = await fetch(`/api/payment/fee-preview/${listingId}`);
-        const data = await res.json();
+        const { data } = await axiosInstance.get(`/payment/fee-preview/${listingId}`);
         setFeeData(data);
       } catch (error) {
         console.error('Failed to fetch fee preview:', error);

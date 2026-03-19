@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import axiosInstance from "../api/axiosInstance";
 
 export default function TenantManagement() {
   const [tenants, setTenants] = useState<any[]>([]);
@@ -26,13 +27,10 @@ export default function TenantManagement() {
 
   const fetchTenants = async () => {
     try {
-      const res = await fetch("/api/homeowner/tenants", {
+      const res = await axiosInstance.get("/homeowner/tenants", {
         headers: { "x-user-id": user?.id || user?._id || "" }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setTenants(data);
-      }
+      setTenants(res.data);
     } catch (error) {
       toast.error("Failed to fetch tenants");
     } finally {

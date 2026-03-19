@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axiosInstance from '../../api/axiosInstance';
 import { MessageSquare, X, Send, HelpCircle, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -24,11 +25,8 @@ export default function ContactSupportForm() {
     }
 
     if (isOpen) {
-      fetch('/api/payment/history?limit=5', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      })
-      .then(res => res.json())
-      .then(data => setRecentPayments(data.payments || []))
+      axiosInstance.get('/payment/history?limit=5')
+      .then(res => setRecentPayments(res.data.payments || []))
       .catch(err => console.error(err));
     }
   }, [isOpen]);
@@ -37,15 +35,8 @@ export default function ContactSupportForm() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('/api/support/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
-      if (res.ok) {
+      const res = await axiosInstance.post('/support/contact', formData);
+      if (res.status === 200 || res.status === 201) {
         setSuccess(true);
         setTimeout(() => {
           setSuccess(false);

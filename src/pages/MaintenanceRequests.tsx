@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import axiosInstance from "../api/axiosInstance";
 import { 
   Wrench, 
   Clock, 
@@ -26,12 +27,11 @@ export default function MaintenanceRequests() {
 
   const fetchRequests = async () => {
     try {
-      const res = await fetch("/api/homeowner/maintenance", {
+      const res = await axiosInstance.get("/homeowner/maintenance", {
         headers: { "x-user-id": user?.id || user?._id || "" }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setRequests(data);
+      if (res.status === 200) {
+        setRequests(res.data);
       }
     } catch (error) {
       toast.error("Failed to fetch maintenance requests");
@@ -42,15 +42,12 @@ export default function MaintenanceRequests() {
 
   const updateStatus = async (id: string, status: string, notes: string) => {
     try {
-      const res = await fetch(`/api/homeowner/maintenance/${id}`, {
-        method: "PUT",
+      const res = await axiosInstance.put(`/homeowner/maintenance/${id}`, { status, adminNotes: notes }, {
         headers: { 
-          "Content-Type": "application/json",
           "x-user-id": user?.id || user?._id || "" 
-        },
-        body: JSON.stringify({ status, adminNotes: notes })
+        }
       });
-      if (res.ok) {
+      if (res.status === 200) {
         toast.success("Request updated");
         fetchRequests();
       }

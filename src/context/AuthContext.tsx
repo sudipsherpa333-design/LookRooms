@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import axiosInstance from "../api/axiosInstance";
 
 type Role = "user" | "homeowner" | "admin" | "agent";
 
@@ -59,13 +60,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (phone: string, password: string) => {
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ phone, password }),
-      });
-      const data = await response.json();
-      if (response.ok && data.user) {
+      const { data } = await axiosInstance.post("/auth/login", { phone, password });
+      if (data.user) {
         setUser(data.user);
         localStorage.setItem("krf_user", JSON.stringify(data.user));
         if (data.token) {
@@ -73,10 +69,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         return { success: true, user: data.user };
       }
-      return { success: false, error: data.error || "Login failed" };
-    } catch (error) {
+      return { success: false, error: "Login failed" };
+    } catch (error: any) {
       console.error("Login failed", error);
-      return { success: false, error: "Network error" };
+      return { success: false, error: error.response?.data?.error || "Network error" };
     }
   };
 
@@ -87,13 +83,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     role: Role,
   ) => {
     try {
-      const response = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, password, role }),
-      });
-      const data = await response.json();
-      if (response.ok && data.user) {
+      const { data } = await axiosInstance.post("/auth/register", { name, phone, password, role });
+      if (data.user) {
         setUser(data.user);
         localStorage.setItem("krf_user", JSON.stringify(data.user));
         if (data.token) {
@@ -101,22 +92,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
         return { success: true };
       }
-      return { success: false, error: data.error || "Registration failed" };
-    } catch (error) {
+      return { success: false, error: "Registration failed" };
+    } catch (error: any) {
       console.error("Registration failed", error);
-      return { success: false, error: "Network error" };
+      return { success: false, error: error.response?.data?.error || "Network error" };
     }
   };
 
   const refreshUser = async () => {
     if (!user) return;
     try {
-      const response = await fetch(`/api/users/${user.id || user._id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data);
-        localStorage.setItem("krf_user", JSON.stringify(data));
-      }
+      const { data } = await axiosInstance.get(`/users/${user.id || user._id}`);
+      setUser(data);
+      localStorage.setItem("krf_user", JSON.stringify(data));
     } catch (error) {
       console.error("Refresh user failed", error);
     }

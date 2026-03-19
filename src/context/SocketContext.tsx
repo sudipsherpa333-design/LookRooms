@@ -18,7 +18,8 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     const token = localStorage.getItem("token");
     if (!token) return;
 
-    const newSocket = io({
+    const backendUrl = import.meta.env.VITE_BACKEND_URL || window.location.origin;
+    const newSocket = io(backendUrl, {
       path: "/socket.io",
       transports: ["websocket", "polling"],
       auth: { token }

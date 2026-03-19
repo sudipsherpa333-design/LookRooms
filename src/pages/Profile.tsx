@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import axiosInstance from "../api/axiosInstance";
 import { User, Mail, Phone, ShieldCheck, ShieldAlert, Edit2, Save, X, Clock, UploadCloud } from "lucide-react";
 
 export default function Profile() {
@@ -62,15 +63,12 @@ export default function Profile() {
           }
         }
       };
-      const res = await fetch(`/api/user/profile`, {
-        method: "PUT",
+      const res = await axiosInstance.put(`/user/profile`, payload, {
         headers: {
-          "Content-Type": "application/json",
           "x-user-id": user?.id || user?._id || "",
         },
-        body: JSON.stringify(payload),
       });
-      if (res.ok) {
+      if (res.status === 200) {
         await refreshUser();
         setIsEditing(false);
       }

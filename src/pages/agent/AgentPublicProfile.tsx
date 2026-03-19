@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import axiosInstance from '../../api/axiosInstance';
 import { Building2, MapPin, Star, Phone, ShieldCheck } from 'lucide-react';
 
 const AgentPublicProfile = () => {
@@ -10,10 +11,9 @@ const AgentPublicProfile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch(`/api/v1/agents/${slug}`);
-        if (res.ok) {
-          const json = await res.json();
-          setData(json);
+        const res = await axiosInstance.get(`/agents/${slug}`);
+        if (res.status === 200) {
+          setData(res.data);
         }
       } catch (error) {
         console.error('Error fetching agent profile:', error);

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { FileText, Send, User, MapPin, Briefcase, Calendar, Users, Bike, Car, Info } from 'lucide-react';
+import { FileText, Send, User, MapPin, Briefcase, Calendar, Users, Bike, Car, Info, MessageSquare } from 'lucide-react';
 import Modal from '../ui/Modal';
 import toast from 'react-hot-toast';
+import axiosInstance from '../../api/axiosInstance';
 
 interface ApplicationModalProps {
   isOpen: boolean;
@@ -42,26 +43,18 @@ export default function ApplicationModal({ isOpen, onClose, listingId, listingTi
     setSubmitting(true);
 
     try {
-      const res = await fetch(`/api/user/applications/${listingId}`, {
-        method: 'POST',
+      await axiosInstance.post(`/user/applications/${listingId}`, formData, {
         headers: {
-          'Content-Type': 'application/json',
-          'x-user-id': localStorage.getItem('userId') || '', // Fallback if context not available
+          'x-user-id': localStorage.getItem('krf_user') ? JSON.parse(localStorage.getItem('krf_user')!).id : '',
         },
-        body: JSON.stringify(formData),
       });
 
-      if (res.ok) {
-        toast.success('Application submitted successfully!');
-        onSuccess();
-        onClose();
-      } else {
-        const data = await res.json();
-        toast.error(data.error || 'Failed to submit application');
-      }
-    } catch (error) {
+      toast.success('Application submitted successfully!');
+      onSuccess();
+      onClose();
+    } catch (error: any) {
       console.error('Error submitting application:', error);
-      toast.error('An error occurred. Please try again.');
+      toast.error(error.response?.data?.error || 'An error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -301,5 +294,3 @@ export default function ApplicationModal({ isOpen, onClose, listingId, listingTi
     </Modal>
   );
 }
-
-import { MessageSquare } from 'lucide-react';

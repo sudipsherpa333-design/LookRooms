@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { FileText, Clock, CheckCircle2, XCircle, Calendar, CreditCard, Wallet, User, ShieldCheck, X, File, MapPin, MessageSquare, Star } from "lucide-react";
+import axiosInstance from "../api/axiosInstance";
 import { useAuth } from "../context/AuthContext";
 import { format } from "date-fns";
 import { ReviewModal } from "../components/ReviewModal";
@@ -23,15 +24,10 @@ export default function Applications() {
       try {
         const endpoint =
           user.role === "homeowner"
-            ? "/api/homeowner/applications"
-            : "/api/user/applications";
-        const res = await fetch(endpoint, {
-          headers: { "x-user-id": user.id || user._id || "" },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setApplications(data);
-        }
+            ? "/homeowner/applications"
+            : "/user/applications";
+        const res = await axiosInstance.get(endpoint);
+        setApplications(res.data);
       } catch (error) {
         console.error("Failed to fetch applications:", error);
       } finally {
@@ -46,13 +42,8 @@ export default function Applications() {
     status: "accept" | "reject",
   ) => {
     try {
-      await fetch(`/api/homeowner/applications/${id}/${status}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "",
-        },
-        body: JSON.stringify({ reason: "Homeowner decision" }),
+      await axiosInstance.put(`/homeowner/applications/${id}/${status}`, {
+        reason: "Homeowner decision",
       });
       // Refresh
       setApplications((prev) =>
@@ -70,22 +61,13 @@ export default function Applications() {
   const handleStartChat = async (applicantId: string, listingId: string) => {
     if (!user) return;
     try {
-      const res = await fetch(`/api/conversations`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-user-id": user.id || user._id || "",
-        },
-        body: JSON.stringify({
-          seekerId: applicantId,
-          ownerId: user.id || user._id,
-          roomId: listingId
-        })
+      const res = await axiosInstance.post(`/conversations`, {
+        seekerId: applicantId,
+        ownerId: user.id || user._id,
+        roomId: listingId,
       });
-      if (res.ok) {
-        const chat = await res.json();
-        navigate(`/chat?id=${chat._id}&shareListing=${listingId}`);
-      }
+      const chat = res.data;
+      navigate(`/chat?id=${chat._id}&shareListing=${listingId}`);
     } catch (error) {
       console.error("Failed to start chat:", error);
     }
@@ -94,18 +76,12 @@ export default function Applications() {
   const initiatePayment = async (app: any) => {
     setSelectedApp(app);
     try {
-      const res = await fetch(`/api/payments/esewa/initiate`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "x-user-id": user?.id || user?._id || "" 
-        },
-        body: JSON.stringify({ applicationId: app._id })
+      const res = await axiosInstance.post(`/payments/esewa/initiate`, {
+        applicationId: app._id,
       });
-      if (res.ok) {
-        const formData = await res.json();
-        
-        // Create and submit form
+      const formData = res.data;
+
+      // Create and submit form
         const form = document.createElement("form");
         form.method = "POST";
         form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form"; // Sandbox URL
@@ -135,7 +111,6 @@ export default function Applications() {
         document.body.appendChild(form);
         form.submit();
         document.body.removeChild(form);
-      }
     } catch (error) {
       console.error("Failed to initiate payment", error);
     }
