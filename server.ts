@@ -12,16 +12,16 @@ import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 
 // Routes
-import authRoutes from './server/routes/authRoutes';
-import listingRoutes from './server/routes/listingRoutes';
-import applicationRoutes from './server/routes/applicationRoutes';
-import reviewRoutes from './server/routes/reviewRoutes';
-import chatRoutes from './server/routes/chatRoutes';
-import paymentRoutes from './server/routes/paymentRoutes';
+import authRoutes from './server/routes/authRoutes.js';
+import listingRoutes from './server/routes/listingRoutes.js';
+import applicationRoutes from './server/routes/applicationRoutes.js';
+import reviewRoutes from './server/routes/reviewRoutes.js';
+import chatRoutes from './server/routes/chatRoutes.js';
+import paymentRoutes from './server/routes/paymentRoutes.js';
 
 // Middleware
-import { errorHandler, notFound } from './server/middleware/errorMiddleware';
-import { startJobs } from './server/jobs/cleanupJobs';
+import { errorHandler, notFound } from './server/middleware/errorMiddleware.js';
+import { startJobs } from './server/jobs/cleanupJobs.js';
 
 dotenv.config();
 
