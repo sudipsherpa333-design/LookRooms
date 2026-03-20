@@ -1,5 +1,5 @@
 {
-  "name": "Kathmandu Room Finder",
-  "description": "A high-performance application tailored for the Kathmandu Valley to solve housing problems faced by students and workers.",
+  "name": "LookRooms",
+  "description": "A high-performance application tailored for the Kathmandu Valley to solve housing problems faced by students and workers. Backend: https://lookrooms.up.railway.app/api/v1, Frontend: https://lookrooms.vercel.app",
   "requestFramePermissions": []
 }

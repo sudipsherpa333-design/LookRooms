@@ -1,13 +1,25 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
-const propertySchema = new mongoose.Schema({
-  ownerId:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  name:        { type: String, required: true },
-  address:     String,
-  totalRooms:  Number,
-  sharedPhotos:[String],
-  amenities:   [String],
-  rooms:       [{ type: mongoose.Schema.Types.ObjectId, ref: 'Listing' }]
-}, { timestamps: true });
+export interface IProperty extends Document {
+  owner: mongoose.Types.ObjectId;
+  address: string;
+  city: string;
+  area: string;
+  type: 'apartment' | 'house' | 'hostel';
+  totalUnits: number;
+  amenities: string[];
+}
 
-export const Property = mongoose.models.Property || mongoose.model("Property", propertySchema);
+const propertySchema = new Schema<IProperty>({
+  owner: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  address: { type: String, required: true },
+  city: { type: String, required: true },
+  area: { type: String, required: true },
+  type: { type: String, enum: ['apartment', 'house', 'hostel'], required: true },
+  totalUnits: { type: Number, default: 1 },
+  amenities: [{ type: String }],
+}, {
+  timestamps: true
+});
+
+export const Property = mongoose.model<IProperty>('Property', propertySchema);

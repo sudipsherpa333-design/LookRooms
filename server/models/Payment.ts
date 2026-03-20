@@ -1,32 +1,29 @@
-import mongoose from "mongoose";
+import mongoose, { Schema, Document } from 'mongoose';
 
-const paymentSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  listingId: { type: mongoose.Schema.Types.ObjectId, ref: 'Listing', required: true },
+export interface IPayment extends Document {
+  user: mongoose.Types.ObjectId;
+  application: mongoose.Types.ObjectId;
+  amount: number;
+  currency: string;
+  status: 'pending' | 'success' | 'failed';
+  method: 'esewa' | 'khalti';
+  transactionId?: string;
+  merchantTransactionId: string;
+  signature?: string;
+}
+
+const paymentSchema = new Schema<IPayment>({
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+  application: { type: Schema.Types.ObjectId, ref: 'Application', required: true, index: true },
   amount: { type: Number, required: true },
-  serviceFee: { type: Number },
-  totalAmount: { type: Number },
-  paymentMethod: { type: String, enum: ['esewa', 'khalti'], required: true },
-  status: { type: String, enum: ['pending', 'success', 'failed', 'refunded'], default: 'pending' },
-  transactionId: { type: String, unique: true, sparse: true },
-  pidx: { type: String },
-  refId: { type: String },
-  gatewayResponse: { type: Object },
-  idempotencyKey: { type: String, unique: true, sparse: true },
-  retryCount: { type: Number, default: 0 },
-  retryExpiry: { type: Date },
-  retryHistory: [{ timestamp: Date, status: String, gateway: String }],
-  oneTapToken: { type: String },
-  refund: {
-    status: { type: String, enum: ['none', 'pending', 'processed', 'failed'], default: 'none' },
-    reason: { type: String },
-    processedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    refundDate: { type: Date },
-    refundTxnId: { type: String },
-    gatewayRefundResponse: { type: Object }
-  },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now }
-}, { timestamps: true });
+  currency: { type: String, default: 'NPR' },
+  status: { type: String, enum: ['pending', 'success', 'failed'], default: 'pending' },
+  method: { type: String, enum: ['esewa', 'khalti'], required: true },
+  transactionId: { type: String },
+  merchantTransactionId: { type: String, required: true, unique: true },
+  signature: { type: String }
+}, {
+  timestamps: true
+});
 
-export const Payment = mongoose.models.Payment || mongoose.model("Payment", paymentSchema);
+export const Payment = mongoose.model<IPayment>('Payment', paymentSchema);

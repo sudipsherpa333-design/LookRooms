@@ -1,28 +1,17 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IFeeRule extends Document {
-  roomType: 'single_room' | 'two_room_flat' | '1bhk' | '2bhk' | 'studio_office';
-  roomTypeLabel: string;
-  serviceFee: number;
-  feeLabel: string;
+  roomType: 'single' | 'double' | 'triple' | 'quad';
+  fee: number;
   isActive: boolean;
-  updatedBy: mongoose.Types.ObjectId;
-  updatedAt: Date;
 }
 
-const FeeRuleSchema = new Schema({
-  roomType: {
-    type: String,
-    enum: ['single_room', 'two_room_flat', '1bhk', '2bhk', 'studio_office'],
-    unique: true,
-    required: true
-  },
-  roomTypeLabel: { type: String },
-  serviceFee: { type: Number, required: true },
-  feeLabel: { type: String },
+const feeRuleSchema = new Schema<IFeeRule>({
+  roomType: { type: String, enum: ['single', 'double', 'triple', 'quad'], required: true, unique: true },
+  fee: { type: Number, required: true },
   isActive: { type: Boolean, default: true },
-  updatedBy: { type: Schema.Types.ObjectId, ref: 'User' },
-  updatedAt: { type: Date, default: Date.now }
+}, {
+  timestamps: true
 });
 
-export const FeeRule = mongoose.models.FeeRule || mongoose.model<IFeeRule>('FeeRule', FeeRuleSchema);
+export const FeeRule = mongoose.model<IFeeRule>('FeeRule', feeRuleSchema);

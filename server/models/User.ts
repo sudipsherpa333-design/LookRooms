@@ -1,259 +1,132 @@
-import mongoose from "mongoose";
-import { encrypt, decrypt } from "../utils/encryption.js";
+import mongoose, { Schema, Document } from 'mongoose';
+import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 
-const userSchema = new mongoose.Schema(
-  {
-    name: { type: String, required: true },
-    email: { type: String, unique: true, sparse: true },
-    phone: { 
-      type: String, 
-      unique: true, 
-      required: true
-    },
-    password: { type: String, required: true },
-    role: {
-      type: String,
-      enum: ["user", "homeowner", "admin", "agent"],
-      default: "user",
-      index: true,
-    },
-    avatar: { type: String, default: "default-avatar-url" },
-    bio: { type: String, default: "" },
-    dateOfBirth: Date,
-    gender: {
-      type: String,
-      enum: ["Male", "Female", "Other", "Prefer not to say"],
-    },
-    occupation: {
-      type: String,
-      enum: ["Student", "Working Professional", "Business", "Other"],
-    },
-    verificationLevel: {
-      type: String,
-      enum: [
-        "unverified",
-        "phone",
-        "email",
-        "document",
-        "full",
-        "pending",
-        "rejected",
-        "verified",
-      ],
-      default: "unverified",
-    },
-    trustScore: { type: Number, min: 0, max: 100, default: 0 },
-    isPhoneVerified: { type: Boolean, default: false },
-    isEmailVerified: { type: Boolean, default: false },
-    isDocumentVerified: { type: Boolean, default: false },
-    verifiedAt: Date,
-    documents: [
-      {
-        type: {
-          type: String,
-          enum: [
-            "citizenship",
-            "passport",
-            "license",
-            "utility",
-            "Citizenship",
-            "Passport",
-            "Driving License",
-          ],
-        },
-        documentNumber: {
-          type: String,
-          set: (val: string) => val ? encrypt(val) : val,
-          get: (val: string) => val ? decrypt(val) : val
-        },
-        frontImage: { url: String, publicId: String },
-        backImage: { url: String, publicId: String },
-        status: {
-          type: String,
-          enum: ["pending", "verified", "rejected"],
-          default: "pending",
-        },
-        submittedAt: Date,
-        verifiedAt: Date,
-        verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        rejectionReason: String,
-      },
-    ],
-    renterProfile: {
-      bio: String,
-      preferences: {
-        budget: { min: Number, max: Number },
-        budgetAmount: Number,
-        preferredAreas: [String],
-        preferredCities: [String],
-        roomType: [String],
-        amenities: [String],
-        moveInDate: Date,
-        stayDuration: String,
-      },
-      lifestyle: {
-        smoking: Boolean,
-        drinking: Boolean,
-        foodPreference: {
-          type: String,
-          enum: ["veg", "non-veg", "eggetarian"],
-        },
-        pets: Boolean,
-        sleepSchedule: String,
-        workFromHome: Boolean,
-        socialHabits: String,
-      },
-      roommatePreferences: {
-        lookingFor: {
-          type: String,
-          enum: ["roommate", "room+roommate", "none"],
-        },
-        genderPreference: String,
-        ageRange: { min: Number, max: Number },
-        occupationPreference: [String],
-        languagePreference: [String],
-      },
-      savedSearches: [
-        { type: mongoose.Schema.Types.ObjectId, ref: "SavedSearch" },
-      ],
-      favoriteListings: [
-        { type: mongoose.Schema.Types.ObjectId, ref: "Listing" },
-      ],
-      applications: [
-        { type: mongoose.Schema.Types.ObjectId, ref: "Application" },
-      ],
-    },
-    homeownerProfile: {
-      whatsappNumber: String,
-      propertyCount: { type: Number, default: 0 },
-      totalListings: { type: Number, default: 0 },
-      activeListings: { type: Number, default: 0 },
-      rentedListings: { type: Number, default: 0 },
-      properties: [{ type: mongoose.Schema.Types.ObjectId, ref: "Listing" }],
-      responseRate: { type: Number, default: 0 },
-      averageResponseTime: Number,
-      totalViews: { type: Number, default: 0 },
-      totalInquiries: { type: Number, default: 0 },
-      conversionRate: Number,
-      subscription: {
-        plan: {
-          type: String,
-          enum: ["free", "basic", "premium", "enterprise"],
-          default: "free",
-        },
-        startDate: Date,
-        endDate: Date,
-        autoRenew: { type: Boolean, default: true },
-        features: [String],
-      },
-      payoutInfo: {
-        bankName: String,
-        accountNumber: {
-          type: String,
-          set: (val: string) => val ? encrypt(val) : val,
-          get: (val: string) => val ? decrypt(val) : val
-        },
-        accountHolder: String,
-        esewaId: {
-          type: String,
-          set: (val: string) => val ? encrypt(val) : val,
-          get: (val: string) => val ? decrypt(val) : val
-        },
-        khaltiPhone: {
-          type: String,
-          set: (val: string) => val ? encrypt(val) : val,
-          get: (val: string) => val ? decrypt(val) : val
-        },
-      },
-      businessName: String,
-      panNumber: String,
-      registeredAddress: String,
-    },
-    adminProfile: {
-      permissions: [
-        {
-          type: String,
-          enum: [
-            "manage_users",
-            "manage_listings",
-            "manage_reports",
-            "manage_system",
-            "view_analytics",
-          ],
-        },
-      ],
-      department: String,
-      accessLevel: { type: Number, min: 1, max: 5, default: 1 },
-      lastLogin: Date,
-      loginHistory: [
-        {
-          ip: String,
-          userAgent: String,
-          timestamp: Date,
-        },
-      ],
-      assignedTasks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Task" }],
-    },
-    notifications: {
-      email: { type: Boolean, default: true },
-      sms: { type: Boolean, default: false },
-      push: { type: Boolean, default: true },
-      marketing: { type: Boolean, default: false },
-    },
-    accountStatus: {
-      type: String,
-      enum: ["active", "suspended", "banned", "deactivated"],
-      default: "active",
-    },
-    suspensionReason: String,
-    lastActive: Date,
-    isOnline: { type: Boolean, default: false },
-    lastSeen: { type: Date, default: Date.now },
-    createdAt: { type: Date, default: Date.now },
-    updatedAt: Date,
-    tenantRating: { type: Number, default: 0 },
-    landlordRating: { type: Number, default: 0 },
-    totalReviewsGiven: { type: Number, default: 0 },
-    totalReviewsReceived: { type: Number, default: 0 },
-    trustBadge: { type: String, enum: ['none','verified','trusted','superhost','top-tenant'], default: 'none' },
-    referralCode: { type: String, unique: true, sparse: true },
-    referralCount: { type: Number, default: 0 },
-    kycDocumentType: String,
-    kycDocumentUrl: String,
-    kycIdNumber: {
-      type: String,
-      set: (val: string) => val ? encrypt(val) : val,
-      get: (val: string) => val ? decrypt(val) : val
-    },
-    passwordResetToken: String,
-    passwordResetTokenExpiry: Date,
-    passwordHistory: { type: [String], default: [] },
-    tokenVersion: { type: Number, default: 0 },
-    recoveryCode: String,
-    loginAttempts: { type: Number, default: 0 },
-    lockUntil: { type: Date },
-    refreshTokens: [{
-      token: String,
-      createdAt: { type: Date, default: Date.now },
-      userAgent: String,
-      ip: String
-    }],
-    lastIp: String,
-    savedPaymentTokens: [{
-      gateway: { type: String, enum: ['esewa', 'khalti'] },
-      token: { type: String },
-      maskedInfo: { type: String },
-      savedAt: { type: Date, default: Date.now }
-    }]
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '12345678901234567890123456789012';
+const IV_LENGTH = 16;
+
+if (ENCRYPTION_KEY.length !== 32) {
+  console.error('CRITICAL: ENCRYPTION_KEY must be exactly 32 characters long.');
+}
+
+function encrypt(text: string, isSearchable: boolean = false): string {
+  if (!text) return text;
+  // For searchable fields, we use a deterministic IV derived from the text itself
+  // This allows for searching but is less secure than random IVs
+  const iv = isSearchable 
+    ? crypto.createHash('md5').update(text).digest() 
+    : crypto.randomBytes(IV_LENGTH);
+    
+  const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
+}
+
+function decrypt(text: string): string {
+  if (!text) return text;
+  try {
+    const textParts = text.split(':');
+    if (textParts.length < 2) return text; // Not encrypted or wrong format
+    const iv = Buffer.from(textParts.shift()!, 'hex');
+    const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-cbc', Buffer.from(ENCRYPTION_KEY), iv);
+    let decrypted = decipher.update(encryptedText);
+    decrypted = Buffer.concat([decrypted, decipher.final()]);
+    return decrypted.toString();
+  } catch (err) {
+    console.error('Decryption failed:', err instanceof Error ? err.message : String(err));
+    return text; // Return original text if decryption fails
+  }
+}
+
+export interface IUser extends Document {
+  name: string;
+  email: string;
+  password?: string;
+  role: 'tenant' | 'landlord' | 'admin';
+  phone: string;
+  avatar?: string;
+  isVerified: boolean;
+  verificationLevel: number;
+  kycStatus: 'pending' | 'verified' | 'rejected' | 'none';
+  kycIdNumber?: string;
+  documentNumber?: string;
+  payoutInfo?: {
+    bankName?: string;
+    accountNumber?: string;
+    esewaId?: string;
+    khaltiId?: string;
+  };
+  savedListings: mongoose.Types.ObjectId[];
+  favorites: mongoose.Types.ObjectId[];
+  trustScore: number;
+  refreshToken?: string;
+  comparePassword(password: string): Promise<boolean>;
+}
+
+const userSchema = new Schema<IUser>({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true, select: false },
+  role: { type: String, enum: ['tenant', 'landlord', 'admin'], default: 'tenant' },
+  phone: { 
+    type: String, 
+    required: true,
+    unique: true,
+    get: decrypt,
+    set: (v: string) => encrypt(v, true)
   },
-  {
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true },
-    timestamps: true,
+  avatar: { type: String },
+  isVerified: { type: Boolean, default: false },
+  verificationLevel: { type: Number, default: 0 },
+  kycStatus: { type: String, enum: ['pending', 'verified', 'rejected', 'none'], default: 'none' },
+  kycIdNumber: { 
+    type: String,
+    get: decrypt,
+    set: encrypt
   },
-);
+  documentNumber: { 
+    type: String,
+    get: decrypt,
+    set: encrypt
+  },
+  payoutInfo: {
+    bankName: { type: String },
+    accountNumber: { 
+      type: String,
+      get: decrypt,
+      set: encrypt
+    },
+    esewaId: { 
+      type: String,
+      get: decrypt,
+      set: encrypt
+    },
+    khaltiId: { 
+      type: String,
+      get: decrypt,
+      set: encrypt
+    }
+  },
+  savedListings: [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
+  favorites: [{ type: Schema.Types.ObjectId, ref: 'Listing' }],
+  trustScore: { type: Number, default: 50 },
+  refreshToken: { type: String, select: false }
+}, {
+  timestamps: true,
+  toJSON: { getters: true },
+  toObject: { getters: true }
+});
 
-userSchema.index({ role: 1, verificationLevel: 1 });
-userSchema.index({ "renterProfile.preferences.preferredAreas": 1 });
+userSchema.pre('save', async function(next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password!, 12);
+  next();
+});
 
-export const User = mongoose.models.User || mongoose.model("User", userSchema);
+userSchema.methods.comparePassword = async function(password: string): Promise<boolean> {
+  return await bcrypt.compare(password, this.password!);
+};
+
+export const User = mongoose.model<IUser>('User', userSchema);

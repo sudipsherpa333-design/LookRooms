@@ -1,0 +1,212 @@
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { AlertCircle, Eye, EyeOff, Phone, Lock, ArrowRight, UserCircle, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useAuth } from "../../../context/AuthContext";
+import { motion } from "framer-motion";
+import { Logo } from "../../../components/Logo";
+
+export default function AgentLogin() {
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const { login, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+
+    const result = await login(phone, password);
+    if (result.success && result.user) {
+      if (result.user.role === 'agent') {
+        navigate('/agent/dashboard');
+      } else if (result.user.role === 'admin') {
+        navigate('/admin/dashboard');
+      } else {
+        logout();
+        setError("You are not authorized to login as an agent. Please use the User Login page.");
+      }
+    } else {
+      setError(result.error || "Login failed");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col md:flex-row overflow-hidden">
+      {/* Left Side - Visual/Hero */}
+      <div className="hidden md:flex md:w-1/2 bg-indigo-900 relative items-center justify-center p-12 overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=2069" 
+            alt="Corporate Office" 
+            className="w-full h-full object-cover opacity-40 scale-110"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-indigo-900 via-indigo-900/40 to-transparent" />
+        </div>
+
+        <div className="relative z-10 max-w-lg">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <Logo size="xl" variant="white" className="mb-8" />
+            <h1 className="text-5xl font-black text-white leading-tight tracking-tighter mb-6">
+              Professional <span className="text-indigo-400">Agent Portal</span>.
+            </h1>
+            <p className="text-indigo-100 text-lg font-medium mb-10 leading-relaxed">
+              Manage your property portfolio, track leads, and close deals faster with our advanced agent tools.
+            </p>
+
+            <div className="space-y-4">
+              {[
+                "Advanced CRM Integration",
+                "Real-time Analytics",
+                "Automated Lead Management",
+                "Direct Client Communication"
+              ].map((feature, i) => (
+                <motion.div 
+                  key={feature}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.5 + (i * 0.1) }}
+                  className="flex items-center gap-3 text-white/80 font-bold text-sm uppercase tracking-widest"
+                >
+                  <CheckCircle2 className="w-5 h-5 text-indigo-400" />
+                  {feature}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+
+        {/* Decorative elements */}
+        <div className="absolute top-20 right-20 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+      </div>
+
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-12 lg:p-20 bg-[#fafaf9] relative">
+        <div className="absolute top-8 left-8 md:hidden">
+          <Logo size="md" />
+        </div>
+
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <div className="mb-10">
+            <h2 className="text-4xl font-black text-stone-900 tracking-tight mb-3">
+              Agent Access
+            </h2>
+            <p className="text-stone-500 font-medium">
+              Authorized personnel only.
+            </p>
+          </div>
+
+          <div className="bg-white border border-stone-200 p-8 sm:p-10 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.03)] relative overflow-hidden group">
+            <div className="absolute top-0 left-0 w-full h-1.5 bg-indigo-500 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
+            
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="mb-6 bg-red-50 border border-red-100 text-red-600 p-4 rounded-2xl flex items-center gap-3 text-sm font-bold"
+              >
+                <AlertCircle className="w-5 h-5 shrink-0" />
+                <p>{error}</p>
+              </motion.div>
+            )}
+
+            <form className="space-y-6" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label className="text-xs font-black text-stone-400 uppercase tracking-widest ml-1">
+                  Agent Phone
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Phone className="h-5 w-5 text-stone-400 group-focus-within:text-indigo-500 transition-colors" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-4 bg-stone-50 border-2 border-stone-100 rounded-2xl text-stone-900 font-bold placeholder-stone-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all sm:text-sm"
+                    placeholder="98XXXXXXXX"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-stone-400 uppercase tracking-widest ml-1">
+                  Security Password
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-stone-400 group-focus-within:text-indigo-500 transition-colors" />
+                  </div>
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="block w-full pl-11 pr-12 py-4 bg-stone-50 border-2 border-stone-100 rounded-2xl text-stone-900 font-bold placeholder-stone-400 focus:outline-none focus:ring-4 focus:ring-indigo-500/10 focus:border-indigo-500 transition-all sm:text-sm"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-stone-400 hover:text-stone-600 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full group relative flex items-center justify-center py-4 px-4 bg-stone-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-stone-800 focus:outline-none focus:ring-4 focus:ring-stone-900/20 disabled:bg-stone-400 transition-all active:scale-[0.98] overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-2">
+                  {loading ? "Verifying..." : "Access Agent Portal"}
+                  {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+                </span>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+              </button>
+            </form>
+
+            <div className="mt-8 pt-8 border-t border-stone-100">
+              <Link
+                to="/login"
+                className="w-full flex items-center justify-center gap-3 py-4 px-4 border-2 border-stone-100 rounded-2xl text-xs font-black text-stone-600 uppercase tracking-widest hover:bg-stone-50 hover:border-stone-200 transition-all active:scale-[0.98]"
+              >
+                <UserCircle className="w-5 h-5 text-indigo-500" />
+                Return to User Login
+              </Link>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <p className="text-[10px] font-bold text-stone-400 uppercase tracking-widest leading-relaxed">
+              Agent Portal Security System v2.1
+              <br />
+              © 2026 LookRooms Nepal.
+            </p>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}
